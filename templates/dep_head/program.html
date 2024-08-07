@@ -1,0 +1,40 @@
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/program.css') }}">
+</head>
+
+{% extends "dep_head/dep_head.html" %}
+
+{% block content %}
+    <div class="container1">
+        {% for program in programs %}
+    <div class="box">
+        <h3>{{ program[1] }}</h3> <!-- Assuming the first column is the program name -->
+        <a href="{{ url_for('my_blueprint.dep_head_content', program_id=program[0]) }}"><button>View</button></a>
+        <span class="count">{{ program[0] }}</span> <!-- Assuming the second column is the program ID -->
+    </div>
+{% endfor %}
+
+    </div>
+    <div class="popup">
+        <div class="close-btn">&times;</div>
+        <div class="form">
+            <form method="POST" action="{{ url_for('my_blueprint.add_program') }}">
+                {{ form.hidden_tag() }}
+                <h2>Add Program</h2>
+                <div class="form-element">
+                    <label for="program">Program</label>
+                    <input type="text" id="program" name="program" placeholder="Ex: BSCS" required>
+                </div>
+                 <!-- Automatically includes the CSRF token -->
+                 <div class="form-element">
+                <button type="submit">Add Program</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
+
+
+{% endblock %}

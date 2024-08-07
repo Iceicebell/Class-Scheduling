@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width = device-width, initial-scale=1.0">
+        <title>Admin</title>
+
+        <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_table.css') }}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/add_account.css') }}">
+    </head>
+
+    <body>
+        <div class="container">
+            <header>
+                <nav class="navbar">
+                    <div class="nav-section nav-left">
+                        <button class="nav-button menu-button">
+                            <i class='bx bx-menu'></i>
+                        </button>
+                        <a href="#" class="nav-logo">
+                            <img src="{{ url_for('static', filename='img/scheduler_logo.png') }}" alt="" class="logo-image">
+                            <h2 class="logo-text">Vinci.ent</h2>
+                        </a>
+                    </div>
+
+                    <div class="nav-section nav-center">
+                        <form class="search-form">
+                        </form>
+                    </div>
+
+                    <div class="nav-section nav-right">
+                        <img src="{{ url_for('static', filename='img/dwcl.png') }}" alt="" class="class-image">
+                    </div>
+                </nav>
+            </header>
+
+            <main class="main-layout">
+
+                <div class="screen-overlay"></div>
+                <!------ SIDEBAR ---------> 
+                <aside class="sidebar">
+
+                    <div class="nav-section nav-left">
+                        <button class="nav-button menu-button">
+                            <i class='bx bx-menu'></i>
+                        </button>
+                        <a href="#" class="nav-logo">
+                            <img src="{{ url_for('static', filename='img/scheduler_logo.png') }}" alt="" class="logo-image">
+                            <h2 class="logo-text">Vinci.ent</h2>
+                        </a>
+                    </div>
+
+                    <div class="link-container">
+                        <div class="link-section">
+                            <a href="" class="link-item">
+                                <i class='bx bxs-user-plus'></i>Accounts
+                            </a>
+                        </div>
+
+                        <div class="section-separator"></div>
+                        <div class="link-section">
+                            <a href="" class="link-item">
+                                <i class='bx bxs-cog' ></i>Settings
+                            </a>
+                            <a href="signout" class="link-item">
+                                <i class='bx bxs-log-out'></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="content-wrapper">
+                 <div class="table">
+                    <div class="table_header">
+                        <p>Accounts</p>
+                        <div>
+                            <button class="add_new">+Add New</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Department</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>asmdagjsd</td>
+                                    <td>kasjhdkashd</td>
+                                    <td>BSBA</td>
+                                    <td>asmdagjsd@email.com</td>
+                                    <td>Department Head</td>
+                                    <td>
+                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>asmdagjsd</td>
+                                    <td>kasjhdkashd</td>
+                                    <td>BSBA</td>
+                                    <td>asmdagjsd@email.com</td>
+                                    <td>Department Head</td>
+                                    <td>
+                                        <button><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>asmdagjsd</td>
+                                    <td>kasjhdkashd</td>
+                                    <td>BSBA</td>
+                                    <td>asmdagjsd@email.com</td>
+                                    <td>Department Head</td>
+                                    <td>
+                                        <button><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>asmdagjsd</td>
+                                    <td>kasjhdkashd</td>
+                                    <td>BSBA</td>
+                                    <td>asmdagjsd@email.com</td>
+                                    <td>Department Head</td>
+                                    <td>
+                                        <button><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>asmdagjsd</td>
+                                    <td>kasjhdkashd</td>
+                                    <td>BSBA</td>
+                                    <td>asmdagjsd@email.com</td>
+                                    <td>Department Head</td>
+                                    <td>
+                                        <button><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-------------------Pop Up--------->
+                <div class="popup">
+                    <div class="close-btn">&times;</div>
+                        <div class="form">
+                            <h2>Edit Account</h2>
+                            <div class="form-element">
+                                
+                                <div class="select-menu">
+                                    <div class="select-btn">
+                                        <span class="sBtn-text">Select Role</span>
+                                        <i class="bx bx-chevron-down"></i>
+                                    </div>
+
+                                    <ul class="options">
+                                        <li class="option">
+                                            <i class='bx bxs-user-voice' style="color: #171515"></i>
+                                            <span class="option-text">Department Head</span>
+                                        </li>
+                                        <li class="option">
+                                            <i class='bx bx-building' style="color: #0e76a8"></i>
+                                            <span class="option-text">Registrar</span>
+                                        </li>
+                                        <li class="option">
+                                            <i class='bx bxs-lock' style="color: #4267b2"></i>
+                                            <span class="option-text">Admin</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="form-element">
+                                <button>Save</button>
+                            </div>
+                        </div>
+                 </div>
+
+
+
+            </div>
+            </main>
+        </div>
+
+
+
+        <!-- =====================Pop Up add====================== -->
+        
+
+        <script src="{{ url_for('static', filename='js/scripts/admin/admin.js') }}"></script>
+    </body>
+    </html>

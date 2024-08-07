@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width = device-width, initial-scale=1.0">
+        <title>Authentication</title>
+
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/authentication.css') }}">
+    </head>
+
+    <body>
+        <div class="form-container">
+            <div class="col col-1">
+                <div class="image-layer">
+                    <img src="{{ url_for('static', filename='img/dwcl.png') }}" alt="Logo" class="form-image-main">
+                    <img src="{{ url_for('static', filename='img/calendar.png') }}" alt="Logo" class="form-image calendar">
+                    <img src="{{ url_for('static', filename='img/clock.png') }}" alt="Logo" class="form-image clock">
+                    <img src="{{ url_for('static', filename='img/building.png') }}" alt="Logo" class="form-image building">
+                </div>
+                <p class="featured-words">You Are Few Minutes Way to Speed Up Your Task With <span>Vinci.ent</span></p>
+            </div>
+
+            <div class="col col-2">
+                <div class="btn-box">
+                    <button class="btn btn-1" id="login">Sign In</button>
+                    <a href="/signup/dept-head"><button class="btn btn-2" id="register">Sign Up</button></a>
+                </div>
+
+                <!-- LOGIN FORM CONTAINER -->
+                 <form method="POST" action="/signin">
+                 <div class="login-form">
+                    <div class="form-title">
+                        <span>Sign In</span>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="message-container">
+                                {% for category, message in messages %}
+                                    <div style="color: red; font-size: 12px;" class="alert alert-{{ loop.first }} alert-dismissible fade show">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    {{ form.hidden_tag() }}
+                    <div class="form-inputs">
+                        <div class="input-box">
+                            {{form.email(id='email', class="input-field", placeholder="Email")}}
+                            <i class="bx bx-envelope icon"></i>
+             
+                            {%if form.email.errors %}
+                                <ul>
+                                    {%for error in form.email.errors %}
+                                        <li class="error">{{error}}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="input-box">
+                            {{form.password(id='password', class="input-field", placeholder="Password")}}
+                            <i class="bx bx-lock-alt icon"></i>
+             
+                            {%if form.password.errors %}
+                                <ul>
+                                    {%for error in form.password.errors %}
+                                        <li class="error">{{error}}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="input-box">
+                            {{ form.submit(class="input-submit", id="submit") }}
+                            <script>
+                                document.getElementById('submit').innerHTML = '<span>Create Account</span><i class="bx bx-right-arrow-alt"></i>';
+                            </script>
+                        </div>
+
+                        </div>
+                    </div>
+                 </div>
+                </form>
+
+
+                <!-- REGISTER FORM CONTAINER -->
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <script src="{{ url_for('static', filename='js/scripts/authentication.js') }}"></script>
+    </body>
+</html>

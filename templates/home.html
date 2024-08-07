@@ -1,0 +1,12 @@
+{% if session['user_role'] == 'dept-head' %}
+    {% include 'dep_head/dep_head_content.html' %}
+
+{% elif session['user_role'] == 'registrar' %}
+    {% include 'registrar/registrar.html' %}
+
+{% elif session['user_role'] == 'admin' %}
+    {% include 'admin/admin.html' %}
+
+{% else %}
+    {% include 'new_user.html' %}
+{% endif %}

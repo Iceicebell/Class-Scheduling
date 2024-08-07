@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Popppins', sans-serif;
+}
+
+:root{
+    --lightest: #a2e2f8;
+    --second: #63beff;
+    --dark-color: #4a8d87;
+    --background: rgb(59, 112, 151);
+}
+.select-menu{
+    margin-top: 10px;
+    width: 250px;
+    color: var(--background);
+}
+.select-menu .select-btn{
+    display: flex;
+    height: 40px;
+    background-color: white;
+    padding: 20px;
+    font-size: 15px;
+    font-weight: 400;
+    border-radius: 8px;
+    align-items: center;
+    cursor: pointer;
+    justify-content: space-between;
+    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+}
+
+.select-btn i{
+    font-size: 25px;
+    transition: 0.3s;
+}
+.select-btn:hover{
+    background-color: #f6f9fc;
+}
+.select-menu.active .select-btn i{
+    transform: rotate(-180deg);
+}
+
+.select-menu .options{
+    position:relative;
+    padding: 20px;
+    margin-top: 10px;
+    border-radius: 0.5rem;
+    background: white;
+    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    display: none;
+}
+.select-menu.active .options{
+    display: block;
+}
+.options .option{
+    display: flex;
+    height: 40px;
+    cursor: pointer;
+    padding: 0 16px;
+    border-radius: 0.5rem;
+    align-items: center;
+    background-color: white;
+}
+
+.options .option:hover{
+    background-color: #f6f9fc;
+}
+
+.option i{
+    font-size: 25px;
+    margin-right: 12px;
+}
+
+.option .option-text{
+    font-size: 15px;
+    color: var(--background);
+}
+
+.popup{
+    position: absolute;
+    top: -150%;
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%,-50%) scale(1.25);
+    width: 310px;
+    padding: 20px 30px;
+    background: #fff;
+    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    height: 400px;
+    transition: top 0ms ease-in-out 200ms,
+                opacity 200ms ease-in-out 0ms,
+                transform 20ms ease-in-out 0ms,
+}
+.popup.active{
+    top: 50%;
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1.25);
+    transition: top 0ms ease-in-out 0ms,
+                opacity 200ms ease-in-out 0ms,
+                transform 20ms ease-in-out 0ms,
+}
+.popup .close-btn{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 15px;
+    height: 15px;
+    background: var(--background);
+    color: var(--lightest);
+    text-align: center;
+    line-height: 15px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.popup .form h2{
+    text-align: center;
+    color: var(--background);
+    margin: 10px 0px 20px;
+    font-size: 25px;
+}
+
+.popup .form .form-element{
+    margin: 15px 0px;
+}
+
+.popup .form .form-element label{
+    font-size: 14px;
+    color: var(--lightest);
+}
+
+.popup .form .form-element button{
+    position: absolute;
+    bottom: 40px;
+    width: 85%;
+    height: 40px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background-color: var(--background);
+    color: var(--lightest);
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.popup .form .form-element button:hover{
+    background-color: var(--second);
+    color: var(--background);
+}
+
+@media (max-width: 768px){
+    .popup{
+        width: 300px;
+    }
+    .select-menu{
+        width: 230px;
+    }
+    .popup .form .form-element button{
+        width: 75%;
+    }
+}
