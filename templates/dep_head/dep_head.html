@@ -58,17 +58,22 @@
                             </a>
                         </div>
                         <div class="link-section">
-                            <a href="{{ url_for('my_blueprint.faculties') }}" class="link-item {% if current_endpoint == 'my_blueprint.program' %}active{% endif %}">
+                            <a href="{{ url_for('my_blueprint.faculties') }}" class="link-item {% if current_endpoint == 'my_blueprint.faculties' %}active{% endif %}">
                                 <i class='bx bxs-user-plus'></i>Faculties
                             </a>
                         </div>
                         <div class="link-section">
-                            <a href="{{ url_for('my_blueprint.generate') }}" class="link-item {% if current_endpoint == 'my_blueprint.program' %}active{% endif %}">
+                            <a href="{{ url_for('my_blueprint.section') }}" class="link-item {% if current_endpoint == 'my_blueprint.section' %}active{% endif %}">
+                                <i class='bx bxs-notification'></i>Section
+                            </a>
+                    </div>
+                        <div class="link-section">
+                            <a href="{{ url_for('algorithm.generate') }}" class="link-item {% if current_endpoint == 'my_blueprint.generate' %}active{% endif %}">
                                 <i class='bx bx-slider-alt'></i>Generate
                             </a>
                         </div>
                         <div class="link-section">
-                            <a href="{{ url_for('my_blueprint.create') }}" class="link-item {% if current_endpoint == 'my_blueprint.program' %}active{% endif %}">
+                            <a href="{{ url_for('my_blueprint.create') }}" class="link-item {% if current_endpoint == 'my_blueprint.create' %}active{% endif %}">
                                 <i class='bx bxs-dashboard'></i>Create Schedule
                             </a>
                     </div>

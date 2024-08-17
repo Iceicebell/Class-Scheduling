@@ -53,7 +53,15 @@ td button:nth-child(2){
     padding: 10px;
     color: white;
 }
-
+td button:nth-child(3){
+    background-color: var(--background);
+    outline: none;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    padding: 10px;
+    color: white;
+}
 .add_new{
     padding: 10px 20px;
     color: white;

@@ -13,9 +13,9 @@
     --background: rgb(59, 112, 151);
 }
 body{
-    background: url("../img/background.jpg");
+    background: url("../img/dwcl_background.jpg");
     background-position: center;
-    background-size: cover;
+    background-size:  cover;
     background-attachment: fixed;
     background-repeat: no-repeat;
 
@@ -30,8 +30,8 @@ body{
 
 .form-container{
     display: flex;
-    width: 1000px;
-    height: 600px;
+    width: 800px;
+    height: 650px;
     border: 3px solid rgb(59, 112, 151, 0.3);
     border-radius: 30px;
     backdrop-filter: blur(20px);
@@ -238,7 +238,7 @@ body{
     padding: 10px;
 }
 .forgot-pass a{
-    color: #4a8d87;
+    color: var(--second)culty;
     text-decoration: none;
     font-size: 14px;
 }

@@ -35,28 +35,30 @@
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Id</th>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Department</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>Units</th>
+                                        <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for course in courses1 %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>asmdagjsd</td>
-                                        <td>kasjhdkashd</td>
-                                        <td>BSBA</td>
-                                        <td>asmdagjsd@email.com</td>
-                                        <td>Department Head</td>
+                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        <td>{{ course[1] }}</td> <!-- Course Name -->
+                                        <td>{{ course[2] }}</td> <!-- Block -->
+                                        <td>{{ course[3] }}</td> <!-- Type -->
+                                        <td>{{ course[4] }}</td> <!-- Units -->
+                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
                                         <td>
                                             <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
                                             <button><i class='bx bxs-trash-alt' ></i></button>
                                         </td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -67,37 +69,36 @@
                     <div class="table">
                         <div class="table_header">
                             <p>2nd Year Courses</p>
-                            <div>
-                                <button class="add_new">+Add New</button>
-                            </div>
                         </div>
                         
                         <div class="table-section">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Id</th>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Department</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>Units</th>
+                                        <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for course in courses2 %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>asmdagjsd</td>
-                                        <td>kasjhdkashd</td>
-                                        <td>BSBA</td>
-                                        <td>asmdagjsd@email.com</td>
-                                        <td>Department Head</td>
+                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        <td>{{ course[1] }}</td> <!-- Course Name -->
+                                        <td>{{ course[2] }}</td> <!-- Block -->
+                                        <td>{{ course[3] }}</td> <!-- Type -->
+                                        <td>{{ course[4] }}</td> <!-- Units -->
+                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
                                         <td>
                                             <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
                                             <button><i class='bx bxs-trash-alt' ></i></button>
                                         </td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -108,37 +109,36 @@
                     <div class="table">
                         <div class="table_header">
                             <p>3rd Year Courses</p>
-                            <div>
-                                <button class="add_new">+Add New</button>
-                            </div>
                         </div>
                         
                         <div class="table-section">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Id</th>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Department</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>Units</th>
+                                        <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for course in courses3 %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>asmdagjsd</td>
-                                        <td>kasjhdkashd</td>
-                                        <td>BSBA</td>
-                                        <td>asmdagjsd@email.com</td>
-                                        <td>Department Head</td>
+                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        <td>{{ course[1] }}</td> <!-- Course Name -->
+                                        <td>{{ course[2] }}</td> <!-- Block -->
+                                        <td>{{ course[3] }}</td> <!-- Type -->
+                                        <td>{{ course[4] }}</td> <!-- Units -->
+                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
                                         <td>
                                             <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
                                             <button><i class='bx bxs-trash-alt' ></i></button>
                                         </td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -149,38 +149,36 @@
                     <div class="table">
                         <div class="table_header">
                             <p>4th Year Courses</p>
-                            <div>
-                                <button class="add_new">+Add New</button>
-                            </div>
                         </div>
                         
                         <div class="table-section">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Id</th>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Department</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Block</th>
+                                        <th>Type</th>
+                                        <th>Units</th>
+                                        <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                
+                                    {% for course in courses4 %}
                                     <tr>
-                                        <td>1</td>
-                                        <td>asmdagjsd</td>
-                                        <td>kasjhdkashd</td>
-                                        <td>BSBA</td>
-                                        <td>asmdagjsd@email.com</td>
-                                        <td>Department Head</td>
+                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        <td>{{ course[1] }}</td> <!-- Course Name -->
+                                        <td>{{ course[2] }}</td> <!-- Block -->
+                                        <td>{{ course[3] }}</td> <!-- Type -->
+                                        <td>{{ course[4] }}</td> <!-- Units -->
+                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
                                         <td>
-                                            <button><i class='bx bxs-edit-alt'></i></button>
+                                            <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
                                             <button><i class='bx bxs-trash-alt' ></i></button>
                                         </td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -192,14 +190,15 @@
             <div class="close-btn">&times;</div>
             <div class="form">
                 <form method="POST" action="{{ url_for('my_blueprint.add_course') }}">
+                    {{ form.hidden_tag() }}
                     <h2>Add Course</h2>
-                    <div class="form-element">
-                        <label for="course_name">Course Name</label>
-                        <input type="text" id="course_name" name="course_name" placeholder="Course Name" required>
-                    </div>
                     <div class="form-element">
                         <label for="course_code">Course Code</label>
                         <input type="text" id="course_code" name="course_code" placeholder="Course Code" required>
+                    </div>
+                    <div class="form-element">
+                        <label for="course_name">Course Name</label>
+                        <input type="text" id="course_name" name="course_name" placeholder="Course Name" required>
                     </div>
                     <div class="form-element">
                         <label for="units">Units</label>
@@ -207,37 +206,45 @@
                     </div>
                     <div class="form-element">
                         <label for="block">Block</label>
-                        <input type="text" id="block" name="block" placeholder="Block ex: A, B, C..." required>
+                        <input type="text" id="course_block" name="course_block" placeholder="Block ex: A, B, C..." required>
                     </div>
+
                     <div class="form-element">
                         <label for="type">Type</label>
                         <div class="select-box">
-                            <select id="type" name="type">
-                                    <option value="">Lecture</option>
-                                    <option value=""> Comp Laboratory</option>
-                                    <option value=""> Engineering Laboratory</option>
-                            </select>
-                        </div>
+                        <select id="course_type" name="course_type">
+                            <option value="">-- Please select --</option>
+                            <option value="lecture">Lecture</option>
+                            <option value="comp_lab">Comp Laboratory</option>
+                            <option value="eng_lab">Engineering Laboratory</option>
+                        </select>
                     </div>
+                    </div>
+
                     <div class="form-element">
-                        <label for="type">Year level</label>
+                        <label for="year_level">Year Level</label>
                         <div class="select-box">
-                            <select id="type" name="type">
-                                    <option value="">1st Year</option>
-                                    <option value="">2nd Year</option>
-                                    <option value="">3rd Year</option>
-                                    <option value="">3rd Year</option>
-                            </select>
+                        <select id="year_level" name="year_level">
+                            <option value="">-- Please select --</option>
+                            <option value="1st_year">1st Year</option>
+                            <option value="2nd_year">2nd Year</option>
+                            <option value="3rd_year">3rd Year</option>
+                            <option value="4th_year">4th Year</option>
+                        </select>
                         </div>
                     </div>
-                    <input type="hidden" id="programId" name="program_id">
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                        var pathArray = window.location.pathname.split('/');
-                        var programId = pathArray[pathArray.length - 1]; // Assuming program_id is the last segment of the path
-                        document.getElementById('programId').value = programId;
-                    });
-                        </script>
+
+                    <div class="form-element">
+                        <label for="faculty">Faculty</label>
+                        <div class="select-box">
+                        <select id="faculty" name="faculty">
+                            <option value="">-- Please select --</option>
+                            {% for faculty in faculty_choices %}
+                            <option value="{{ faculty[0] }}">{{ faculty[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    </div>
                      <!-- Automatically includes the CSRF token -->
                      <div class="form-element">
                     <button type="submit">Add Program</button>

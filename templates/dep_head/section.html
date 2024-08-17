@@ -1,0 +1,64 @@
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/sections.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/sections_table.css') }}">
+</head>
+
+{% extends "dep_head/dep_head.html" %}
+
+{% block content %}
+<div class="table">
+    <div class="table_header">
+        <p>Sections</p>
+    </div>
+    
+    <div class="table-section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Section Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for section in sections %}
+                <tr>
+                    <td>{{section[1]}}</td>
+                    <td>
+                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                        <button><i class='bx bxs-trash-alt' ></i></button>
+                        <button><i class='bx bx-chevrons-right'></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+
+
+<div class="popup">
+    <div class="close-btn">&times;</div>
+    <div class="form">
+        <form method="POST" action="{{ url_for('my_blueprint.add_section') }}">
+            {{ form.hidden_tag() }}
+            <h2>Create Section</h2>
+            <div class="form-element">
+                <label for="section_name">Section Name</label>
+                <input type="text" id="section_name" name="section_name" placeholder="Section Name" required>
+            </div>
+             <!-- Automatically includes the CSRF token -->
+             <div class="form-element">
+            <button type="submit">Add Program</button>
+            </div>
+        </form>
+    </div>
+</div>
+    <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
+{% endblock %}
+<script src="{{ url_for('static', filename='js/scripts/dep_head/dep_head.js') }}"></script>

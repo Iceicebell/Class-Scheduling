@@ -1,6 +1,85 @@
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/faculties.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/faculty_table.css') }}">
+</head>
 {% extends "dep_head/dep_head.html" %}
 
 {% block content %}
-    <h1>Subjects Page Content</h1>
-    <p>This is the assign page.</p>
+<div class="table">
+    <div class="table_header">
+        <p>Faculties</p>
+    </div>
+    
+    <div class="table-section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Faculty Type</th>
+                    <th>Units</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in faculty %}
+                <tr>
+                    <td>{{member[0]}}</td>
+                    <td>{{member[1]}}</td>
+                    <td>{{member[2]}}</td>
+                    <td>{{member[3]}}</td>
+                    <td>{{member[6]}}/{{member[4]}}</td>
+                    <td>
+                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                        <button><i class='bx bxs-trash-alt' ></i></button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<div class="popup">
+    <div class="close-btn">&times;</div>
+    <div class="form">
+        <form method="POST" action="{{ url_for('my_blueprint.faculties') }}">
+            {{ form.hidden_tag() }}
+            <h2>Add Faculty</h2>
+            <div class="form-element">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" placeholder="First Name" required>
+            </div>
+            <div class="form-element">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" placeholder="Last Name" required>
+            </div>
+            <div class="form-element">
+                <label for="faculty_units"> Faculty Units</label>
+                <input type="text" id="faculty_units" name="faculty_units" placeholder="Number of hours per week" required>
+            </div>
+            <div class="form-element">
+                <label for="faculty_type">Faculty Type</label>
+                <div class="select-box">
+                <select id="faculty_type" name="faculty_type">
+                    <option value="">-- Please select --</option>
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part time</option>
+                </select>
+            </div>
+            </div>
+             <!-- Automatically includes the CSRF token -->
+             <div class="form-element">
+            <button type="submit">Add Program</button>
+            </div>
+        </form>
+    </div>
+</div>
+    <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
 {% endblock %}
+<script src="{{ url_for('static', filename='js/scripts/dep_head/dep_head.js') }}"></script>
