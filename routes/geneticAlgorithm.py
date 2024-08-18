@@ -25,8 +25,8 @@ bp = Blueprint('algorithm', __name__)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 POPULATION_SIZE = 100
-MAX_GENERATIONS = 500
-
+MAX_GENERATIONS = 50
+MUTATION_RATE = 0.01
 
 class Solution:
     def __init__(self, schedule=None):
@@ -77,6 +77,68 @@ class Solution:
         cursor.execute(query, (course_id,))
         result = cursor.fetchone()
         return result[0] if result else 0
+
+    def calculate_fitness(self, cursor):
+        print("Calculating fitness...")
+        try:
+            conflicts = 0
+            faculty_workload = {}
+            
+            # Validate the schedule before proceeding
+            if not self.schedule:
+                print("Warning: Empty schedule.")
+                self.fitness_score = float('-inf')  # Assign a very low fitness score for empty schedules
+                return self.fitness_score
+            
+            unit_match_score = self.check_unit_match(cursor)
+            
+            for section_assignments in self.schedule.values():
+                for i, (course_id1, day1, start_hour1, duration1) in enumerate(section_assignments):
+                    for j in range(i+1, len(section_assignments)):
+                        course_id2, day2, start_hour2, duration2 = section_assignments[j]
+                        if day1 == day2 and (start_hour1 <= start_hour2 < start_hour1 + duration1 or start_hour2 <= start_hour1 < start_hour2 + duration2):
+                            conflicts += 1
+                        faculty_id1 = self.get_faculty_id(cursor, course_id1)
+                        faculty_id2 = self.get_faculty_id(cursor, course_id2)
+                        if faculty_id1 == faculty_id2:
+                            conflicts += 1
+                        faculty_workload[faculty_id1] = faculty_workload.get(faculty_id1, 0) + duration1
+                        faculty_workload[faculty_id2] = faculty_workload.get(faculty_id2, 0) + duration2
+
+            max_workload = max(faculty_workload.values(), default=0)
+            unit_match_score = self.check_unit_match(cursor)
+            self.fitness_score = -conflicts - max_workload + unit_match_score
+            print(f"Calculated fitness score: {self.fitness_score}")
+            return self.fitness_score
+        except Exception as e:
+            print(f"Error calculating fitness: {e}")
+            self.fitness_score = float('-inf')  # Assign a very low fitness score in case of an error
+            return self.fitness_score
+    
+    def __lt__(self, other):
+            """Less than comparison method."""
+            if not isinstance(other, type(self)):
+                # Not a Solution instance, so we can't compare.
+                return NotImplemented
+            # Ensure fitness_score is never None or handle comparisons appropriately
+            return self.fitness_score < other.fitness_score if other.fitness_score is not None else False
+
+        # Optionally, implement equality for completeness
+    def __eq__(self, other):
+        """Equality comparison method."""
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.fitness_score == other.fitness_score if other.fitness_score is not None else False
+
+    def check_unit_match(self, cursor):
+        unit_match_score = 0
+        for section_assignments in self.schedule.values():
+            for course_id, _, _, duration in section_assignments:
+                expected_units = self.get_course_units(cursor, course_id)
+                scheduled_hours = sum(dur for _, _, _, dur in section_assignments if dur == duration)
+                unit_match_score -= abs(expected_units - scheduled_hours)
+        return unit_match_score
+
 
     def display(self):
     # Iterate over each section in the schedule
@@ -144,12 +206,28 @@ def crossover(parent1, parent2):
             child.schedule[section_id] = parent1.schedule.get(section_id, [])[:]
         else:
             child.schedule[section_id] = parent2.schedule.get(section_id, [])[:]
+    print("Crossover performed, child schedule:", child.schedule)
     return child
 
 def mutate(self):
     section_id = random.choice(list(self.schedule.keys()))
+    
+    # Check if the selected section has any courses assigned
+    if not self.schedule[section_id]:
+        print(f"Section {section_id} has no courses assigned. Skipping mutation.")
+        return  # Skip mutation for this iteration
+    
     course_index = random.randrange(len(self.schedule[section_id]))
-    course_id, day, start_hour, duration = self.schedule[section_id][course_index][:3]
+    
+    course_info = self.schedule[section_id][course_index]
+    
+    # Ensure the course information has the expected length
+    if len(course_info) != 4:
+        raise ValueError(f"Course information missing expected values: {course_info}")
+    
+    # Directly unpack the course information, assuming it has exactly four elements
+    course_id, day, start_hour, duration = course_info  # Corrected to match the expected structure
+    
     # Attempt to move the course to a different slot without causing conflicts
     while True:
         new_day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
@@ -161,13 +239,14 @@ def mutate(self):
                     if other_course[0] == course_id and other_course[1] == new_day and new_start_hour >= other_course[2] and new_start_hour + duration <= other_course[2] + other_course[3]:
                         conflict = True
                         break
-                if conflict:
-                    break
+                    if conflict:
+                        break
         if not conflict:
             break
     self.remove_course_assignment(section_id, course_id)
     self.add_course_assignment(section_id, course_id, new_day, new_start_hour, duration)
     self.fitness_score = None
+    print("Mutated solution:", self.schedule)
 
 def generate_initial_solution():
     solution = Solution()
@@ -196,36 +275,58 @@ def generate_initial_solution():
         day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
         start_hour = random.randint(7, 19)  # Adjust start_hour calculation if necessary to fit max_units
         for section_id, course_id, _ in courses:
-            print(f"Assigning course {course_id} to section {section_id} on {day} starting at {start_hour} for {max_units} hours")
             solution.add_course_assignment(section_id, course_id, day, start_hour, max_units)
 
+    print("Initial solution generated:", solution.schedule)
+    
     return solution
 
+def select_parents(population):
+    # Example: Random selection for simplicity. Implement a more sophisticated method based on fitness.
+    parent1 = random.choice(population)
+    parent2 = random.choice(population)
+    return parent1, parent2
+
 def run_genetic_algorithm(initial_solution):
-    population = [initial_solution] + [generate_initial_solution() for _ in range(POPULATION_SIZE - 1)]  # Define POPULATION_SIZE based on your needs
-
-    for generation in range(MAX_GENERATIONS):  # Define MAX_GENERATIONS based on your criteria
-        # Evaluate fitness for each solution in the population
-        fitness_scores = [solution.calculate_fitness() for solution in population]
-
-        # Select the best solutions based on fitness scores
-        # This is a simplified example; you might use tournament selection, roulette wheel selection, etc.
-        population = sorted(population, key=lambda x: x.fitness_score, reverse=True)[:POPULATION_SIZE // 2]
-
-        # Apply crossover and mutation to generate the next generation
-        next_generation = []
-        while len(next_generation) < POPULATION_SIZE:
-            parent1 = random.choice(population)
-            parent2 = random.choice(population)
-            child = crossover(parent1, parent2)
-            mutate(child)
-            next_generation.append(child)
-
-        population = next_generation
-
-    # After all generations, return the best solution found
-    best_solution = max(population, key=lambda x: x.fitness_score)
+    db = mysql.connector.connect(**db_config)
+    try:
+        cursor = db.cursor()
+        population = [initial_solution] + [generate_initial_solution() for _ in range(POPULATION_SIZE - 1)]  # Adjusted for POPULATION_SIZE
+        
+        for solution in population:
+            solution.calculate_fitness(cursor)
+        
+        for _ in range(MAX_GENERATIONS):
+            new_population = []
+            while len(new_population) < POPULATION_SIZE:
+                parent1, parent2 = select_parents(population)
+                
+                # Crossover
+                child = crossover(parent1, parent2)  # Note: crossover now returns a single child
+                
+                # Mutation
+                if random.random() < MUTATION_RATE:
+                    mutate(child)
+                
+                new_population.append(child)  # Append the single child to the new population
+                
+            # Merge and select the best or replace the population
+            population = new_population
+            
+            # Optionally, recalculate fitness for new population
+            for solution in new_population:
+                solution.calculate_fitness(cursor)
+            
+            population.sort(key=lambda x: x.fitness_score, reverse=True)
+            population = population[:POPULATION_SIZE]
+        
+        best_solution = max(population, key=lambda x: x.fitness_score)
+    finally:
+        cursor.close()
+        db.close()
+    print("Selected best solution's schedule:", best_solution.schedule)
     return best_solution
+
 
 @bp.route('/department-head/generate')
 def generate():
