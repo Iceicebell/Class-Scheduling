@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 POPULATION_SIZE = 50
 MAX_GENERATIONS = 100
-MUTATION_RATE = 0.2
+MUTATION_RATE = 0.5
 
 class Solution:
     def __init__(self, schedule=None, shared_schedule=None):
@@ -37,18 +37,25 @@ class Solution:
     def add_course_assignment(self, section_id, course_id, day, start_hour, duration, course_code, course_block):
         if section_id not in self.schedule:
             self.schedule[section_id] = []
-        # Check if the course_code and course_block combo is already scheduled
-        existing_schedule = self.get_schedule_by_course_code_and_block(course_code, course_block)
-        if existing_schedule:
-            day, start_hour = existing_schedule
+        # Assuming other parameters are correctly passed and used elsewhere in your method
+
+        # Adjust max_duration to respect the lunch break without unnecessarily reducing course duration
+        if start_hour < 12:
+            max_duration = min(12 - start_hour, duration)  # Ensure the course ends before 12:00 if it starts before
         else:
-            # If not, assign a new day and start_hour
-            day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'])
-            start_hour = random.randint(7, 17)  # Adjust based on your requirements
-            # Update shared_schedule to reflect this assignment for future use
-            self.shared_schedule[(course_code, course_block)] = (day, start_hour)
-        self.schedule[section_id].append((course_id, day, start_hour, duration, course_code, course_block))
+            max_duration = duration  # For courses starting at or after 12:00, keep the original duration unless it would extend beyond 20:00
+            if start_hour + duration > 20:
+                max_duration = 20 - start_hour  # Adjust only if it extends beyond 20:00
+
+        # Ensure no course spans the lunch break
+        adjusted_start_hour = start_hour
+        if start_hour + duration > 13 and start_hour < 12:
+            adjusted_start_hour = 13  # Move the course to start after lunch if it would otherwise span it
+            max_duration = min(20 - adjusted_start_hour, duration)  # Adjust duration to not exceed 20:00
+
+        self.schedule[section_id].append((course_id, day, adjusted_start_hour, max_duration, course_code, course_block))
         self.fitness_score = None
+
 
     def get_schedule_by_course_code_and_block(self, course_code, course_block):
         # This method retrieves the existing day and start_hour for a given course_code and course_block combo
@@ -102,36 +109,50 @@ class Solution:
             conflicts = 0
             faculty_workload = {}
             
-            # Validate the schedule before proceeding
             if not self.schedule:
                 print("Warning: Empty schedule.")
-                self.fitness_score = float('-inf')  # Assign a very low fitness score for empty schedules
+                self.fitness_score = float('-inf')
                 return self.fitness_score
             
             unit_match_score = self.check_unit_match(cursor)
             
             for section_id, assignments in self.schedule.items():
                 for i, (course_id1, day1, start_hour1, duration1, course_code1, course_block1) in enumerate(assignments):
+                    # Penalize courses that span the lunch break
+                    if start_hour1 < 12 and start_hour1 + duration1 > 12:
+                        conflicts += 1  # Penalize if a course starts before 12:00 and ends after 12:00, potentially spanning the lunch break
+                    
                     for j in range(i+1, len(assignments)):
                         course_id2, day2, start_hour2, duration2, course_code2, course_block2 = assignments[j]
-                        if day1 == day2 and (start_hour1 <= start_hour2 < start_hour1 + duration1 or start_hour2 <= start_hour1 < start_hour2 + duration2):
-                            conflicts += 1
-                        faculty_id1 = self.get_faculty_id(cursor, course_id1)
-                        faculty_id2 = self.get_faculty_id(cursor, course_id2)
-                        if faculty_id1 == faculty_id2:
-                            conflicts += 1
-                        faculty_workload[faculty_id1] = faculty_workload.get(faculty_id1, 0) + duration1
-                        faculty_workload[faculty_id2] = faculty_workload.get(faculty_id2, 0) + duration2
-
-            max_workload = max(faculty_workload.values(), default=0)
-            unit_match_score = self.check_unit_match(cursor)
-            self.fitness_score = -conflicts - max_workload + unit_match_score
-            print(f"Calculated fitness score: {self.fitness_score}")
-            return self.fitness_score
+                        if day1 == day2:
+                            # Check for direct time overlaps
+                            if start_hour1 <= start_hour2 < start_hour1 + duration1 or start_hour2 <= start_hour1 < start_hour2 + duration2:
+                                conflicts += 1
+                            # Penalize if either course spans the lunch break
+                            if (start_hour1 < 12 and start_hour1 + duration1 > 12) or (start_hour2 < 12 and start_hour2 + duration2 > 12):
+                                conflicts += 1
+                            faculty_id1 = self.get_faculty_id(cursor, course_id1)
+                            faculty_id2 = self.get_faculty_id(cursor, course_id2)
+                            if faculty_id1 == faculty_id2:
+                                conflicts += 1
+                            faculty_workload[faculty_id1] = faculty_workload.get(faculty_id1, 0) + duration1
+                            faculty_workload[faculty_id2] = faculty_workload.get(faculty_id2, 0) + duration2
+                            
+                            # Additional check for lunch break violations within the nested loop
+                            if (start_hour1 < 12 and start_hour1 + duration1 > 12) or (start_hour2 < 12 and start_hour2 + duration2 > 12):
+                                conflicts += 1  # Penalize if either course spans the lunch break
+                            
+                max_workload = max(faculty_workload.values(), default=0)
+                unit_match_score = self.check_unit_match(cursor)
+                self.fitness_score = -conflicts - max_workload + unit_match_score
+                print(f"Calculated fitness score: {self.fitness_score}")
+                return self.fitness_score
         except Exception as e:
             print(f"Error calculating fitness: {e}")
-            self.fitness_score = float('-inf')  # Assign a very low fitness score in case of an error
+            self.fitness_score = float('-inf')
             return self.fitness_score
+
+
     
     def __lt__(self, other):
             """Less than comparison method."""
@@ -256,43 +277,44 @@ def get_course_details(cursor, course_id):
     else:
         raise ValueError(f"Course details not found for course_id: {course_id}")
     
+
+
 def mutate(self, cursor):
-    """
-    Mutates the schedule by randomly altering the day and start hour of a selected course assignment.
-    Ensures courses with the same course_code and course_block are mutated together.
-    """
     section_id = random.choice(list(self.schedule.keys()))
-    
     if not self.schedule[section_id]:
         print(f"Section {section_id} has no courses assigned. Skipping mutation.")
         return  # Skip mutation for this iteration
     
     course_index = random.randrange(len(self.schedule[section_id]))
-    
     course_info = self.schedule[section_id][course_index]
     print(f"Course info before unpacking: {course_info}")
-    course_id, day, start_hour, duration, course_code, course_block = course_info  # Correctly unpacking five elements
+    course_id, day, start_hour, duration, course_code, course_block = course_info  # Assuming duration is unpacked correctly
     
     try:
         new_day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'])
-        new_start_hour = random.randint(7, 17 - duration)
         
+        # Adjusting start hour selection to exclude the 12:00-13:00 period
+        morning_period = range(7, 12)
+        afternoon_period = range(13, 20)
+        combined_periods = list(morning_period) + list(afternoon_period)
+        new_start_hour = random.choice(combined_periods)
+        
+        # Ensure the new start hour plus duration does not exceed 20:00 and respects the lunch break
+        if new_start_hour + duration > 13 and new_start_hour < 12:
+            new_start_hour = 13  # Ensure start after lunch break if it would otherwise span it
+        max_duration = duration  # Keep original duration unless it would extend beyond 20:00
+        if new_start_hour + duration > 20:
+            max_duration = 20 - new_start_hour  # Adjust only if it extends beyond 20:00
+
         # Update shared_schedule to reflect the mutation
-        self.shared_schedule[(course_code, course_block)] = (new_day, new_start_hour)
-        
-        # Debugging print statement to confirm the update
-        print(f"Updated shared_schedule for {course_code} {course_block}: {new_day} {new_start_hour}")
+        self.shared_schedule[(course_code, course_block)] = (new_day, new_start_hour, max_duration)
         
         # Apply the new schedule to all sections with the same course_code and course_block
-        for section, assignments in self.schedule.items():
-            for i, assignment in enumerate(assignments):
-                if assignment[3] == course_code and assignment[4] == course_block:  # Check course_code and course_block
-                    # Update the day and start_hour for this course in all sections
-                    assignments[i] = (course_id, new_day, new_start_hour, duration, course_code, course_block)
-        print("Mutated solution:", self.schedule)
+        # Ensure the original duration is maintained unless it conflicts with the lunch break or end time
     except Exception as e:
         print(f"An error occurred during mutation: {e}")
         return  # Exit the function early due to an error
+
 
 
 
@@ -321,16 +343,24 @@ def generate_initial_solution():
 
     # Assign the same schedule to all courses in the same group
     for (course_code, course_block), courses in grouped_courses.items():
-        max_units = max(units for _, _, units in courses)  # Determine the maximum units for the group
+        max_units = max(units for _, _, units in courses)
         day, start_hour = solution.get_schedule_by_course_code_and_block(course_code, course_block)
+        
         if day is None and start_hour is None:
-            # If not already scheduled, assign a new day and start_hour
             day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'])
-            start_hour = random.randint(7, 17)  # Adjust start_hour calculation if necessary to fit max_units
-            solution.shared_schedule[(course_code, course_block)] = (day, start_hour)  # Store in shared_schedule for future use
-            print(f"Assigning shared schedule for {course_code} {course_block}: {day} {start_hour}")
+            morning_period = range(7, 12)
+            afternoon_period = range(13, 20)
+            combined_periods = list(morning_period) + list(afternoon_period)
+            start_hour = random.choice(combined_periods)
+            max_duration = min(20 - start_hour, max_units) if start_hour >= 13 else min(12 - start_hour, max_units)  # Respect lunch break
+            solution.shared_schedule[(course_code, course_block)] = (day, start_hour, max_duration)
+            print(f"Assigning shared schedule for {course_code} {course_block}: {day} {start_hour} {max_duration}")
+        else:
+            _, start_hour, max_duration = solution.shared_schedule[(course_code, course_block)]
+            max_duration = min(20 - start_hour, max_units) if start_hour >= 13 else min(12 - start_hour, max_units)  # Adjust for lunch break
+        
         for section_id, course_id, _ in courses:
-            solution.add_course_assignment(section_id, course_id, day, start_hour, max_units, course_code, course_block)
+            solution.add_course_assignment(section_id, course_id, day, start_hour, max_duration, course_code, course_block)
 
     print("Initial solution generated:", solution.schedule)
     return solution
