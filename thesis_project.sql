@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 17, 2024 at 07:06 AM
+-- Generation Time: Aug 23, 2024 at 07:19 AM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 8.1.6
 
@@ -150,11 +150,11 @@ INSERT INTO `section_courses` (`section_id`, `course_id`) VALUES
 (2, 24),
 (2, 25),
 (2, 28),
-(3, 22),
 (3, 26),
 (3, 27),
-(3, 28),
-(3, 30);
+(3, 29),
+(3, 30),
+(3, 31);
 
 -- --------------------------------------------------------
 
@@ -165,9 +165,9 @@ INSERT INTO `section_courses` (`section_id`, `course_id`) VALUES
 CREATE TABLE `unavailable_times` (
   `id` int(11) NOT NULL,
   `section_id` int(11) NOT NULL,
-  `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL
+  `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `start_time` decimal(50,2) NOT NULL,
+  `end_time` decimal(50,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -175,21 +175,19 @@ CREATE TABLE `unavailable_times` (
 --
 
 INSERT INTO `unavailable_times` (`id`, `section_id`, `day_of_week`, `start_time`, `end_time`) VALUES
-(1, 2, 'Monday', '07:00:00', '08:30:00'),
-(2, 2, 'Wednesday', '07:00:00', '08:30:00'),
-(3, 2, 'Monday', '08:30:00', '10:00:00'),
-(4, 2, 'Wednesday', '08:30:00', '10:00:00'),
-(5, 2, 'Monday', '10:00:00', '11:30:00'),
-(6, 2, 'Wednesday', '10:00:00', '11:30:00'),
-(7, 2, 'Tuesday', '04:00:00', '05:30:00'),
-(8, 2, 'Friday', '04:00:00', '05:30:00'),
-(9, 3, 'Tuesday', '07:00:00', '08:30:00'),
-(10, 3, 'Tuesday', '07:00:00', '08:30:00'),
-(11, 3, 'Tuesday', '04:00:00', '05:30:00'),
-(12, 3, 'Friday', '04:00:00', '05:30:00'),
-(13, 3, 'Thursday', '01:00:00', '03:00:00'),
-(14, 3, 'Monday', '03:00:00', '04:30:00'),
-(15, 3, 'Wednesday', '03:00:00', '04:30:00');
+(18, 2, 'Monday', '8.50', '10.00'),
+(19, 2, 'Wednesday', '8.50', '10.00'),
+(20, 2, 'Monday', '10.00', '11.50'),
+(21, 2, 'Wednesday', '10.00', '11.50'),
+(22, 2, 'Tuesday', '4.00', '5.50'),
+(23, 2, 'Friday', '4.00', '5.50'),
+(26, 3, 'Tuesday', '7.00', '8.50'),
+(27, 3, 'Friday', '7.00', '8.50'),
+(28, 3, 'Tuesday', '4.00', '5.50'),
+(29, 3, 'Friday', '4.00', '5.50'),
+(30, 3, 'Thursday', '1.00', '3.00'),
+(31, 3, 'Monday', '3.00', '4.50'),
+(32, 3, 'Wednesday', '3.00', '4.50');
 
 -- --------------------------------------------------------
 
@@ -300,7 +298,7 @@ ALTER TABLE `sections`
 -- AUTO_INCREMENT for table `unavailable_times`
 --
 ALTER TABLE `unavailable_times`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `users`

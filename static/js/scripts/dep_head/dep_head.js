@@ -28,10 +28,10 @@ tabs.forEach((tab,index) => {
 
         all_content.forEach(content=>{content.classList.remove('active')});
         all_content[index].classList.add('active');
-    })
+    });
 
 
-})
+});
 
 // =====================POP UP==================
 

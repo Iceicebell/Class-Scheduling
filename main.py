@@ -7,20 +7,24 @@ from wtforms.validators import DataRequired, Email, ValidationError, EqualTo
 import bcrypt
 from flask_mysqldb import MySQL
 from flask import g
+from flask_wtf.csrf import CSRFProtect
 
 salt = bcrypt.gensalt()
     
 
 def create_app():
     app = Flask(__name__)
-    app.register_blueprint(my_blueprint)
-    app.register_blueprint(algorithm)
+    
 
     app.config['MYSQL_HOST'] = 'localhost'
     app.config['MYSQL_USER'] = 'root'
     app.config['MYSQL_PASSWORD'] = ''
     app.config['MYSQL_DB'] = 'thesis_project'
     app.secret_key = 'mindyourownbusiness'
+
+    app.register_blueprint(my_blueprint)
+    app.register_blueprint(algorithm)
+
 
     with app.app_context():
         mysql = MySQL(app)

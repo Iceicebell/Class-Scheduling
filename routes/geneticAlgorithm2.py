@@ -1,7 +1,7 @@
 from decimal import Decimal
 import random
 from typing import Optional
-from flask import Blueprint, current_app, flash, has_app_context, jsonify, redirect, render_template, render_template_string, request, abort, session, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, abort, session, url_for
 from functools import wraps
 from flask import g
 from flask_mysqldb import MySQL
@@ -12,12 +12,6 @@ import logging
 from flask import current_app
 import random
 import mysql.connector
-from flask import Flask
-from flask_wtf.csrf import CSRFProtect
-from datetime import timedelta, time
-
-
-
 
 db_config = {
     'host': 'localhost',
@@ -31,10 +25,10 @@ bp = Blueprint('algorithm', __name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-POPULATION_SIZE = 10
-MAX_GENERATIONS = 20
-MUTATION_RATE = 0.1
-    
+POPULATION_SIZE = 20
+MAX_GENERATIONS = 50
+MUTATION_RATE = 0.01
+
 class Solution:
     def __init__(self, schedule=None, shared_schedule=None):
         self.schedule = schedule if schedule else {}
@@ -225,17 +219,17 @@ class Solution:
                         end_time1 = start_hour1 + duration1
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1:  # Overlap check
-                            conflicts_penalty += 100  # Simple penalty, adjust based on severity
+                            conflicts_penalty += 1  # Simple penalty, adjust based on severity
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         if faculty_id1 == faculty_id2:  # Faculty conflict
-                            conflicts_penalty += 100  # Adjust penalty as needed
+                            conflicts_penalty += 1  # Adjust penalty as needed
 
         # Penalty for disregarding lunch breaks
         for section_id, assignments in self.schedule.items():
             for course_id, day, start_hour, duration, course_code, course_block in assignments:
                 if 12 <= start_hour < 13 and start_hour + duration > 13:  # Course spans over lunch break
-                    conflicts_penalty += 100  # Adjust based on how much it spans over
+                    conflicts_penalty += 1  # Adjust based on how much it spans over
 
         # Reward for maintaining course-code-block integrity
         course_code_block_groups = {}
@@ -246,7 +240,7 @@ class Solution:
                     course_code_block_groups[key] = []
                 course_code_block_groups[key].append((course_id, day, start_hour, duration))
                 if len(course_code_block_groups[key]) > 1:  # More than one instance of the same course-code-block grouping
-                    integrity_reward += 100  # Reward for keeping them together
+                    integrity_reward += 1  # Reward for keeping them together
 
         # Reward for efficient utilization (simple example: reward for filling morning and afternoon slots)
         for section_id, assignments in self.schedule.items():
@@ -275,43 +269,6 @@ class Solution:
         if not isinstance(other, type(self)):
             return NotImplemented
         return self.fitness_score == other.fitness_score if other.fitness_score is not None else False
-    
-    def find_available_slot(self, section_id, duration):
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-        start_hours = list(range(7, 20))  # 7 AM to 7 PM
-        
-        # Shuffle days and start hours to introduce randomness
-        random.shuffle(days)
-        random.shuffle(start_hours)
-        
-        for day in days:
-            for start_hour in start_hours:
-                end_hour = start_hour + duration
-                
-                # Check if the slot crosses the lunch break (12 PM to 1 PM)
-                if start_hour < 12 and end_hour > 13:
-                    continue
-                
-                # Check if the slot extends beyond 8 PM
-                if end_hour > 20:
-                    continue
-                
-                # Check for conflicts with existing assignments
-                conflict = False
-                for course_id, existing_day, existing_start, existing_duration, _, _ in self.schedule.get(section_id, []):
-                    existing_end = existing_start + existing_duration
-                    if day == existing_day and (
-                        (start_hour < existing_end and end_hour > existing_start) or
-                        (existing_start < end_hour and existing_end > start_hour)
-                    ):
-                        conflict = True
-                        break
-                
-                if not conflict:
-                    return (day, start_hour)
-        
-        # If no available slot is found
-        return None
 
 
     def display(self):
@@ -349,6 +306,65 @@ class Solution:
                 print("".join(row))
             print("-" * 80)  
 
+def find_available_slot(solution, section_id, course):
+    course_id, _, _, duration, _, _ = course
+    available_slots = solution.get_available_slots(section_id, duration)
+    return random.choice(available_slots) if available_slots else None
+
+def resolve_conflicts(solution):
+    for section_id, courses in solution.schedule.items():
+        resolved_courses = []
+        for course in courses:
+            if not any(is_conflict(course, existing) for existing in resolved_courses):
+                resolved_courses.append(course)
+            else:
+                new_slot = find_available_slot(solution, section_id, course)
+                if new_slot:
+                    course_id, _, _, duration, code, block = course
+                    new_day, new_start = new_slot
+                    resolved_courses.append((course_id, new_day, new_start, duration, code, block))
+        solution.schedule[section_id] = resolved_courses
+    return solution
+
+def crossover(parent1, parent2):
+    child_schedule = {}
+    child_shared_schedule = {}
+
+    # Combine schedules from both parents
+    for section_id in set(parent1.schedule.keys()).union(parent2.schedule.keys()):
+        child_schedule[section_id] = []
+        
+        # Add courses from parent1
+        for course in parent1.schedule.get(section_id, []):
+            if not child_schedule[section_id] or not any(is_conflict(course, existing) for existing in child_schedule[section_id]):
+                child_schedule[section_id].append(course)
+        
+        # Add non-conflicting courses from parent2
+        for course in parent2.schedule.get(section_id, []):
+            if not any(is_conflict(course, existing) for existing in child_schedule[section_id]):
+                child_schedule[section_id].append(course)
+
+        
+    # Combine shared schedules
+    for key in set(parent1.shared_schedule.keys()).union(parent2.shared_schedule.keys()):
+        if key in parent1.shared_schedule:
+            child_shared_schedule[key] = parent1.shared_schedule[key]
+        else:
+            child_shared_schedule[key] = parent2.shared_schedule[key]
+
+    return Solution(schedule=child_schedule, shared_schedule=child_shared_schedule)
+
+def is_conflict(course1, course2):
+    _, day1, start1, duration1, _, _ = course1
+    _, day2, start2, duration2, _, _ = course2
+    end1 = start1 + duration1
+    end2 = start2 + duration2
+    return day1 == day2 and (
+        (start1 < end2 and end1 > start2) or
+        (start2 < end1 and end2 > start1)
+    )      
+
+
 def get_course_details(cursor, course_id):
     query = "SELECT course_code, course_block FROM courses WHERE course_id = %s"
     cursor.execute(query, (course_id,))
@@ -361,85 +377,111 @@ def get_course_details(cursor, course_id):
     
 
 
-def crossover(parent1, parent2):
-    # Initialize the child's schedule and shared_schedule as empty dictionaries
-    child_schedule = {}
-    child_shared_schedule = {}
-
-    # Iterate over the keys in parent1's schedule to combine schedules
-    for course_id in set(parent1.schedule.keys()).union(parent2.schedule.keys()):
-        # Check if the course exists in both parents; if not, use the one that does exist
-        if course_id in parent1.schedule:
-            child_schedule[course_id] = parent1.schedule[course_id].copy()
-        elif course_id in parent2.schedule:
-            child_schedule[course_id] = parent2.schedule[course_id].copy()
-
-    # Combine shared_schedules similarly, but directly assign tuple values
-    for course_id in set(parent1.shared_schedule.keys()).union(parent2.shared_schedule.keys()):
-        if course_id in parent1.shared_schedule:
-            child_shared_schedule[course_id] = parent1.shared_schedule[course_id]
-        elif course_id in parent2.shared_schedule:
-            child_shared_schedule[course_id] = parent2.shared_schedule[course_id]
-
-    # After combining, ensure time slots do not exceed 20 hours
-    for course_id, blocks_list in child_schedule.items():
-        corrected_blocks = []
-        for block in blocks_list:  # Assuming blocks_list is a list of tuples
-            day, start_hour, end_hour, *rest = block  # Use *rest to capture remaining elements
-            if end_hour > 20:
-                end_hour = 20  # Simplified correction logic
-            corrected_blocks.append((day, start_hour, end_hour, *rest))
-        child_schedule[course_id] = corrected_blocks
-
-    # Create a new Solution object with the combined schedule and shared_schedule
-    child_solution = Solution(schedule=child_schedule, shared_schedule=child_shared_schedule)
-    return child_solution
-
-    
-
 def mutate(self, cursor):
     section_id = random.choice(list(self.schedule.keys()))
     if not self.schedule[section_id]:
-        print(f"Section {section_id} has no courses assigned. Skipping mutation.")
-        return  # Skip mutation for this iteration
+        return
     
     course_index = random.randrange(len(self.schedule[section_id]))
-    course_info = self.schedule[section_id][course_index]
-    print(f"Course info before unpacking: {course_info}")
-    course_id, day, start_hour, duration, course_code, course_block = course_info  # Assuming duration is unpacked correctly
+    course_id, old_day, old_start_hour, duration, course_code, course_block = self.schedule[section_id][course_index]
     
-    new_slot = self.find_available_slot(section_id, duration)
-    if new_slot:
-        self.remove_course_assignment(section_id, course_id)
-        self.add_course_assignment(section_id, course_id, new_slot[0], new_slot[1], duration, course_code, course_block, cursor)
-    try:
-        new_day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'])
-        
-        # Adjusting start hour selection to exclude the 12:00-13:00 period
-        morning_period = range(7, 12)
-        afternoon_period = range(13, 20)
-        combined_periods = list(morning_period) + list(afternoon_period)
-        new_start_hour = random.choice(combined_periods)
-        
-        # Ensure the new start hour plus duration does not exceed 20:00 and respects the lunch break
-        if new_start_hour + duration > 13 and new_start_hour < 12:
-            new_start_hour = 13  # Ensure start after lunch break if it would otherwise span it
-        max_duration = duration  # Keep original duration unless it would extend beyond 20:00
-        if new_start_hour + duration > 20:
-            max_duration = 20 - new_start_hour  # Adjust only if it extends beyond 20:00
+    # Generate a list of available time slots
+    available_slots = self.get_available_slots(section_id, duration)
+    
+    if not available_slots:
+        return  # No available slots, skip mutation
+    
+    # Choose a random available slot
+    new_day, new_start_hour = random.choice(available_slots)
+    
+    # Update the schedule
+    self.schedule[section_id][course_index] = (course_id, new_day, new_start_hour, duration, course_code, course_block)
+    self.shared_schedule[(course_code, course_block)] = (new_day, new_start_hour, duration)
 
-        # Update shared_schedule to reflect the mutation
-        self.shared_schedule[(course_code, course_block)] = (new_day, new_start_hour, max_duration)
+def get_available_slots(self, section_id, duration):
+    available_slots = []
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    for day in days:
+        for start_hour in range(7, 20):  # Assuming 7 AM to 8 PM
+            if self.is_slot_available(section_id, day, start_hour, duration):
+                available_slots.append((day, start_hour))
+    return available_slots
+
+def is_slot_available(self, section_id, day, start_hour, duration):
+    end_hour = start_hour + duration
+    # Check for lunch break conflict
+    if start_hour < 13 and end_hour > 12:
+        return False
+    # Check for overlap with existing courses
+    for _, course_day, course_start, course_duration, _, _ in self.schedule[section_id]:
+        course_end = course_start + course_duration
+        if day == course_day and (
+            (start_hour < course_end and end_hour > course_start) or
+            (course_start < end_hour and course_end > start_hour)
+        ):
+            return False
+    return True
+
+
+def repair_schedule(solution):
+    for section_id, courses in solution.schedule.items():
+        conflicting_courses = find_conflicting_courses(courses)
+        for course in conflicting_courses:
+            new_slot = find_available_slot(solution, section_id, course)
+            if new_slot:
+                course_id, _, _, duration, code, block = course
+                new_day, new_start = new_slot
+                solution.schedule[section_id].remove(course)
+                solution.schedule[section_id].append((course_id, new_day, new_start, duration, code, block))
+    return solution
+
+def find_conflicting_courses(courses):
+    conflicts = []
+    for i, course1 in enumerate(courses):
+        for course2 in courses[i+1:]:
+            if is_conflict(course1, course2):
+                conflicts.append(course1)
+                break
+    return conflicts
+
+# def mutate(self, cursor):
+#     section_id = random.choice(list(self.schedule.keys()))
+#     if not self.schedule[section_id]:
+#         print(f"Section {section_id} has no courses assigned. Skipping mutation.")
+#         return  # Skip mutation for this iteration
+    
+#     course_index = random.randrange(len(self.schedule[section_id]))
+#     course_info = self.schedule[section_id][course_index]
+#     print(f"Course info before unpacking: {course_info}")
+#     course_id, day, start_hour, duration, course_code, course_block = course_info  # Assuming duration is unpacked correctly
+    
+#     try:
+#         new_day = random.choice(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'])
         
-        # Apply the new schedule to all sections with the same course_code and course_block
-        # Ensure the original duration is maintained unless it conflicts with the lunch break or end time
-    except Exception as e:
-        print(f"An error occurred during mutation: {e}")
-        return  # Exit the function early due to an error
+#         # Adjusting start hour selection to exclude the 12:00-13:00 period
+#         morning_period = range(7, 12)
+#         afternoon_period = range(13, 20)
+#         combined_periods = list(morning_period) + list(afternoon_period)
+#         new_start_hour = random.choice(combined_periods)
+        
+#         # Ensure the new start hour plus duration does not exceed 20:00 and respects the lunch break
+#         if new_start_hour + duration > 13 and new_start_hour < 12:
+#             new_start_hour = 13  # Ensure start after lunch break if it would otherwise span it
+#         max_duration = duration  # Keep original duration unless it would extend beyond 20:00
+#         if new_start_hour + duration > 20:
+#             max_duration = 20 - new_start_hour  # Adjust only if it extends beyond 20:00
+
+#         # Update shared_schedule to reflect the mutation
+#         self.shared_schedule[(course_code, course_block)] = (new_day, new_start_hour, max_duration)
+        
+#         # Apply the new schedule to all sections with the same course_code and course_block
+#         # Ensure the original duration is maintained unless it conflicts with the lunch break or end time
+#     except Exception as e:
+#         print(f"An error occurred during mutation: {e}")
+#         return  # Exit the function early due to an error
 
 
 def generate_initial_solution():
-
     solution = Solution(shared_schedule={})
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor()
@@ -449,8 +491,8 @@ def generate_initial_solution():
             FROM sections
             JOIN section_courses ON sections.section_id = section_courses.section_id
             JOIN courses ON section_courses.course_id = courses.course_id
-            WHERE sections.department = %s;
-        """,(session.get('department'),))
+            WHERE sections.department = 'SOECS';
+        """)
         sections_data = cursor.fetchall()
 
         # Fetch unavailable times for each section to mark them in the schedule
@@ -510,9 +552,6 @@ def run_genetic_algorithm(initial_solution):
         
         for _ in range(MAX_GENERATIONS):
             new_population = []
-            elite_count = POPULATION_SIZE // 10
-            new_population.extend(population[:elite_count])
-
             while len(new_population) < POPULATION_SIZE:
                 # Parent selection
                 parent1, parent2 = select_parents(population)
@@ -523,6 +562,8 @@ def run_genetic_algorithm(initial_solution):
                 # Mutation with a chance defined by MUTATION_RATE
                 if random.random() < MUTATION_RATE:
                     mutate(child, cursor)  # Ensure mutate is defined to accept a solution and cursor for DB operations
+                child = resolve_conflicts(child)
+                child = repair_schedule(child)
                 new_population.append(child)
             
             # Replace the old population with the new one, ensuring we maintain the same population size
@@ -545,15 +586,8 @@ def run_genetic_algorithm(initial_solution):
     return best_solution
 
 
-def get_best_solution():
-    initial_solution = generate_initial_solution()
-    return run_genetic_algorithm(initial_solution)
 
-class GenerateForm(FlaskForm):
-    submit = SubmitField('Generate Schedule')
-
-
-@bp.route('/department-head/generate', methods=['GET', 'POST'])
+@bp.route('/department-head/generate')
 def generate():
     if session.get('isVerified') == False:
         return redirect(url_for('my_blueprint.new_user'))
@@ -562,91 +596,5 @@ def generate():
     if session.get('user_role') != 'dept-head':
         abort(403)
 
-    form = GenerateForm()
 
-    if form.validate_on_submit():
-        # Run the genetic algorithm and get the best solution
-        best_solution = get_best_solution()
-        
-        display_schedule = {}
-        for section_id, courses in best_solution.schedule.items():
-            display_schedule[section_id] = {
-                'courses': {},
-                'unavailable': {}
-            }
-            def decimal_to_time(decimal_hours):
-                hours = int(decimal_hours // 1)
-                minutes = int((decimal_hours % 1) * 60)
-                return f"{hours}:{minutes:02d}"
-            
-            for course_id, day, start_hour, duration, course_code, course_block in courses:
-                if course_id == -1:  # Unavailable time
-                    if day not in display_schedule[section_id]['unavailable']:
-                        display_schedule[section_id]['unavailable'][day] = []
-                    display_schedule[section_id]['unavailable'][day].append({
-                        'start_hour': decimal_to_time(float(start_hour)),
-                        'end_hour': decimal_to_time(float(start_hour + duration))
-                    })
-                else:  # Regular course
-                    course_key = f"{course_code}/{course_block}"
-                    if course_key not in display_schedule[section_id]['courses']:
-                        display_schedule[section_id]['courses'][course_key] = {}
-                    display_schedule[section_id]['courses'][course_key][day] = {
-                        'start_hour': decimal_to_time(float(start_hour)),
-                        'end_hour': decimal_to_time(float(start_hour + duration))
-                    }
-        
-        # If it's an AJAX request, return only the schedule HTML
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            schedule_html = render_template_string('''
-                {% for section_id, courses in schedule.items() %}
-                <div class="table">
-                    <div class="table_header">
-                        <p>Section {{ section_id }}</p>
-                    </div>
-                    <div class="table-section">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Course Code/ Block</th>
-                                    <th>Monday</th>
-                                    <th>Tuesday</th>
-                                    <th>Wednesday</th>
-                                    <th>Thursday</th>
-                                    <th>Friday</th>
-                                    <th>Saturday</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for course_code_block, schedule in courses.items() %}
-                                <tr>
-                                    <td>{{ course_code_block }}</td>
-                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
-                                        <td>
-                                            {% if day in schedule %}
-                                                {{ schedule[day]['start_hour'] }}-{{ schedule[day]['end_hour'] }}
-                                            {% endif %}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endfor %}
-            ''', schedule=display_schedule)
-            return schedule_html
-        
-        # For normal POST requests, render the full template
-        return render_template('dep_head/generate.html',
-                               form=form,
-                               schedule=display_schedule,
-                               current_endpoint='department-head/generate')
-    
-    # If it's a GET request or form validation failed, just render the template without a schedule
-    return render_template('dep_head/generate.html',
-                           form=form,
-                           current_endpoint='department-head/generate')
-
-
+    return render_template('dep_head/generate.html', current_endpoint=request.endpoint)
