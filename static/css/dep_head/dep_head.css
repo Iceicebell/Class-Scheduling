@@ -129,13 +129,13 @@ body.sidebar-hidden .main-layout .sidebar{
     margin-bottom: 1rem;
     color: var(--background);
     border-radius: 0.5rem;
-    width: 80%;
+    width: 85%;
     margin-top: 1rem;
 }
 .sidebar .link-section .link-item:hover{
     background-color: white;
     color: var(--second);
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    box-shadow: 5px 5px 10px rgb(0, 0, 0, 0.1);
 }
 
 .link-section .link-item.active {
@@ -148,13 +148,11 @@ body.sidebar-hidden .main-layout .sidebar{
     margin-right: 0.63rem;
     background-color: white;
     padding: .5rem;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
     border-radius: 7px;
 }
 .sidebar .link-section .link-item:hover i {
     background-color: var(--background);
-    color: white;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    color: white;       
 }
 .main-layout .content-wrapper{
     padding: 0 1 rem;

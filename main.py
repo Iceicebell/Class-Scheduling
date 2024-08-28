@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, flash, session
+from flask import Flask, make_response, render_template, url_for, redirect, flash, session
 from routes.routes import bp as my_blueprint
 from routes.geneticAlgorithm import bp as algorithm
 from flask_wtf import FlaskForm
@@ -113,7 +113,6 @@ def create_app():
         else:
             print("Form validation failed:", dept_head_form.errors)
 
-        flash("Account Created!")
         return render_template('dept_headsignup.html', dept_head_form=dept_head_form)
 
 
@@ -219,7 +218,16 @@ def create_app():
     @app.route('/signout')
     def logout():
         session.clear()
+        response = make_response(redirect(url_for('signin')))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return redirect(url_for('signin'))
+    
+    @app.after_request
+    def after_request(response):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
     @app.route('/')
     def none():

@@ -31,8 +31,8 @@ bp = Blueprint('algorithm', __name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-POPULATION_SIZE = 10
-MAX_GENERATIONS = 20
+POPULATION_SIZE = 25
+MAX_GENERATIONS = 50
 MUTATION_RATE = 0.1
     
 class Solution:
@@ -95,7 +95,8 @@ class Solution:
                 self.schedule[section_id].append((course_id, d, start_hour, max_duration, course_code, course_block))
                 # print(f"Added course {course_id} on {d} at {start_hour} with max_duration {max_duration}")
             else:
-                print(f"Skipping duplicate course {course_id} on {d} at {start_hour}")
+                pass
+                # print(f"Skipping duplicate course {course_id} on {d} at {start_hour}")
 
         self.fitness_score = None
 
@@ -209,7 +210,7 @@ class Solution:
         - Reward for maintaining course-code-block integrity
         - Reward for efficient time utilization
         """
-        print("Calculating Fitness...")
+        # print("Calculating Fitness...")
         fitness_score = 0
         conflicts_penalty = 0
         integrity_reward = 0
@@ -256,7 +257,7 @@ class Solution:
 
         # Calculate total fitness score
         self.fitness_score = integrity_reward + efficiency_reward - conflicts_penalty - utilization_penalty
-        print("Fitness Score: ",self.fitness_score)
+        # print("Fitness Score: ",self.fitness_score)
         return self.fitness_score
 
 
@@ -400,12 +401,12 @@ def crossover(parent1, parent2):
 def mutate(self, cursor):
     section_id = random.choice(list(self.schedule.keys()))
     if not self.schedule[section_id]:
-        print(f"Section {section_id} has no courses assigned. Skipping mutation.")
+        #print(f"Section {section_id} has no courses assigned. Skipping mutation.")
         return  # Skip mutation for this iteration
     
     course_index = random.randrange(len(self.schedule[section_id]))
     course_info = self.schedule[section_id][course_index]
-    print(f"Course info before unpacking: {course_info}")
+    # print(f"Course info before unpacking: {course_info}")
     course_id, day, start_hour, duration, course_code, course_block = course_info  # Assuming duration is unpacked correctly
     
     new_slot = self.find_available_slot(section_id, duration)
@@ -642,11 +643,11 @@ def generate():
         return render_template('dep_head/generate.html',
                                form=form,
                                schedule=display_schedule,
-                               current_endpoint='department-head/generate')
+                               current_endpoint=request.endpoint)
     
     # If it's a GET request or form validation failed, just render the template without a schedule
     return render_template('dep_head/generate.html',
                            form=form,
-                           current_endpoint='department-head/generate')
+                           current_endpoint=request.endpoint)
 
 

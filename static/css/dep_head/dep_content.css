@@ -105,7 +105,7 @@
     background: #fff;
     box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
     border-radius: 0.5rem;
-    height: 700px;
+    height: 650px;
     transition: top 0ms ease-in-out 200ms,
                 opacity 200ms ease-in-out 0ms,
                 transform 20ms ease-in-out 0ms,
@@ -141,7 +141,7 @@
 }
 
 .popup .form .form-element{
-    margin: 15px 0px;
+    margin: 10px 0px;
 }
 
 .popup .form .form-element label{
@@ -165,7 +165,7 @@
 
 .popup .form .form-element button{
     position: absolute;
-    bottom: 40px;
+    bottom: 50px;
     width: 80%;
     height: 40px;
     border: none;
@@ -196,6 +196,21 @@
     background: rgb(59, 112, 151, 0.2);
     color: var(--background);
 }
+@media (max-height: 632px){
+    .popup{
+        width: 300px;
+    }
+
+    .popup.active{
+        margin-top: 150px;
+    }
+    .select-menu{
+        width: 230px;
+    }
+    .popup .form .form-element button{
+        width: 75%;
+    }
+}   
 @media (max-width: 768px){
     .popup{
         width: 300px;

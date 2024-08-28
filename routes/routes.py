@@ -381,7 +381,7 @@ def dep_head_content(program_id):
     faculties = []
     try:
         cur = g.mysql.connection.cursor()
-        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculty")
+        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculty WHERE department = %s",(session.get('department'),))
         faculties = cur.fetchall()
     except Exception as e:
         logger.error(f"An error occurred: {e}")
