@@ -13,89 +13,24 @@
     --dark-color: #4a8d87;
     --background: rgb(59, 112, 151);
 }
-.select-menu{
-    margin-top: 10px;
-    width: 250px;
-    color: var(--background);
-}
-.select-menu .select-btn{
-    display: flex;
-    height: 40px;
-    background-color: white;
-    padding: 20px;
-    font-size: 15px;
-    font-weight: 400;
-    border-radius: 8px;
-    align-items: center;
-    cursor: pointer;
-    justify-content: space-between;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
-}
-
-.select-btn i{
-    font-size: 25px;
-    transition: 0.3s;
-}
-.select-btn:hover{
-    background-color: #f6f9fc;
-}
-.select-menu.active .select-btn i{
-    transform: rotate(-180deg);
-}
-
-.select-menu .options{
-    position:relative;
-    padding: 20px;
-    margin-top: 10px;
-    border-radius: 0.5rem;
-    background: white;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
-    display: none;
-}
-.select-menu.active .options{
-    display: block;
-}
-.options .option{
-    display: flex;
-    height: 40px;
-    cursor: pointer;
-    padding: 0 16px;
-    border-radius: 0.5rem;
-    align-items: center;
-    background-color: white;
-}
-
-.options .option:hover{
-    background-color: #f6f9fc;
-}
-
-.option i{
-    font-size: 25px;
-    margin-right: 12px;
-}
-
-.option .option-text{
-    font-size: 15px;
-    color: var(--background);
-}
-
 .popup{
     position: absolute;
     top: -150%;
     left: 50%;
     opacity: 0;
     transform: translate(-50%,-50%) scale(1.25);
-    width: 310px;
+    width: 315px;
     padding: 20px 30px;
     background: #fff;
     box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
     border-radius: 0.5rem;
-    height: 400px;
+    height: 500px;
     transition: top 0ms ease-in-out 200ms,
                 opacity 200ms ease-in-out 0ms,
                 transform 20ms ease-in-out 0ms,
 }
 .popup.active{
+    margin-top: 60px;
     top: 50%;
     opacity: 1;
     transform: translate(-50%,-50%) scale(1.25);
@@ -130,13 +65,27 @@
 
 .popup .form .form-element label{
     font-size: 14px;
-    color: var(--lightest);
+    color: var(--background);
+}
+::placeholder{
+    color: #a2e2f8;
+    font-size: 10px;
+}
+.popup .form .form-element input{
+    margin-top: 5px;
+    display: block;
+    width: 100%;
+    padding: 10px;
+    outline: none;
+    border: 1px solid var(--background);
+    border-radius: 5px;
+    color: var(--background);
 }
 
 .popup .form .form-element button{
     position: absolute;
     bottom: 40px;
-    width: 85%;
+    width: 80%;
     height: 40px;
     border: none;
     outline: none;
@@ -149,6 +98,21 @@
 
 .popup .form .form-element button:hover{
     background-color: var(--second);
+    color: var(--background);
+}
+.select-box select{
+    width: 100%;
+    margin-top: 5px;
+    display: block;
+    padding: 10px;
+    outline: none;
+    border: 1px solid var(--background);
+    border-radius: 5px;
+    color: var(--background);
+    
+}
+.select-box option{
+    background: rgb(59, 112, 151, 0.2);
     color: var(--background);
 }
 

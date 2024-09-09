@@ -205,7 +205,8 @@ def create_app():
                         flash('Invalid user role')
                         return redirect(url_for('signin'))  # Redirect back to signin if role is unknown
                 else:
-                    return redirect(url_for('my_blueprint.new_user'))
+                    flash('Account no longer available')
+                    return redirect(url_for('signin')) 
             else:
                 flash('Login Failed. Please check your email and password')
                 return redirect(url_for('signin'))
@@ -233,8 +234,15 @@ def create_app():
     def none():
         return redirect(url_for('signin'))
 
-    return app
+    @app.template_filter('to_grid_row')
+    def to_grid_row(time):
+        time_parts = time.split(':')
+        hours = int(time_parts[0])
+        minutes = int(time_parts[1])
+        return (hours - 7) * 2 + (minutes // 30) + 1
 
+    return app
+    
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)

@@ -19,6 +19,7 @@
     margin-left: 50px;
     margin-right: 50px;
     box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    margin-bottom: 50px;
 }
 
 .table_header{
@@ -83,7 +84,43 @@ td button:nth-child(3){
 .table_section{
     overflow: auto;
 }
+#block-search {
+    border: none;
+    outline: none;
+    padding: 5px;
+    margin-right: 10px;
+}
 
+#search-button {
+    padding: 5px 10px;
+    background-color: #4a8d87;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#search-button:hover {
+    background-color: #3a7a7a;
+}
+#block-search::placeholder {
+    color: var(--background);
+    opacity: 1;
+}
+
+
+.btn-add-to-section {
+    padding: 5px 10px;
+    background-color: #4a8d87;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-add-to-section:hover {
+    background-color: #3a7a7a;
+}
 table{
     width: 100%;
     table-layout: fixed;

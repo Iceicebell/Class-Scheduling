@@ -77,7 +77,7 @@
                     <div class="table_header">
                         <p>Accounts</p>
                         <div>
-                            <button class="add_new">+Add New</button>
+                            <button id="show-add" class="add_new">+Add New</button>
                         </div>
                     </div>
                     
@@ -86,10 +86,8 @@
                             <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Department</th>
                                     <th>Email</th>
+                                    <th>Program</th>
                                     <th>Role</th>
                                     <th>Action</th>
                                 </tr>
@@ -97,114 +95,61 @@
                             <tbody>
                                 <tr>
                                     <td>1</td>
-                                    <td>asmdagjsd</td>
-                                    <td>kasjhdkashd</td>
-                                    <td>BSBA</td>
                                     <td>asmdagjsd@email.com</td>
-                                    <td>Department Head</td>
-                                    <td>
-                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
-                                        <button><i class='bx bxs-trash-alt' ></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>asmdagjsd</td>
-                                    <td>kasjhdkashd</td>
                                     <td>BSBA</td>
-                                    <td>asmdagjsd@email.com</td>
                                     <td>Department Head</td>
                                     <td>
                                         <button><i class='bx bxs-edit-alt'></i></button>
                                         <button><i class='bx bxs-trash-alt' ></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>asmdagjsd</td>
-                                    <td>kasjhdkashd</td>
-                                    <td>BSBA</td>
-                                    <td>asmdagjsd@email.com</td>
-                                    <td>Department Head</td>
-                                    <td>
-                                        <button><i class='bx bxs-edit-alt'></i></button>
-                                        <button><i class='bx bxs-trash-alt' ></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>asmdagjsd</td>
-                                    <td>kasjhdkashd</td>
-                                    <td>BSBA</td>
-                                    <td>asmdagjsd@email.com</td>
-                                    <td>Department Head</td>
-                                    <td>
-                                        <button><i class='bx bxs-edit-alt'></i></button>
-                                        <button><i class='bx bxs-trash-alt' ></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>asmdagjsd</td>
-                                    <td>kasjhdkashd</td>
-                                    <td>BSBA</td>
-                                    <td>asmdagjsd@email.com</td>
-                                    <td>Department Head</td>
-                                    <td>
-                                        <button><i class='bx bxs-edit-alt'></i></button>
-                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                        <button><i class='bx bx-minus-circle'></i></button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <!-------------------Pop Up--------->
-                <div class="popup">
-                    <div class="close-btn">&times;</div>
-                        <div class="form">
-                            <h2>Edit Account</h2>
-                            <div class="form-element">
-                                
-                                <div class="select-menu">
-                                    <div class="select-btn">
-                                        <span class="sBtn-text">Select Role</span>
-                                        <i class="bx bx-chevron-down"></i>
-                                    </div>
+                </div>
 
-                                    <ul class="options">
-                                        <li class="option">
-                                            <i class='bx bxs-user-voice' style="color: #171515"></i>
-                                            <span class="option-text">Department Head</span>
-                                        </li>
-                                        <li class="option">
-                                            <i class='bx bx-building' style="color: #0e76a8"></i>
-                                            <span class="option-text">Registrar</span>
-                                        </li>
-                                        <li class="option">
-                                            <i class='bx bxs-lock' style="color: #4267b2"></i>
-                                            <span class="option-text">Admin</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="form-element">
-                                <button>Save</button>
-                            </div>
-                        </div>
-                 </div>
-
-
-
-            </div>
             </main>
         </div>
 
 
 
         <!-- =====================Pop Up add====================== -->
-        
+        <div class="popup">
+            <div class="close-btn">&times;</div>
+            <div class="form">
+                <form method="POST" action="">
+                    <h2>Add New Account</h2>
+                    <div class="form-element">
+                        <label for="email">Email</label>
+                        <input type="text" id="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-element">
+                        <label for="password">Password</label>
+                        <input type="text" id="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="form-element">
+                        <label for="program"> Program</label>
+                        <input type="text" id="program" name="program" placeholder="Program" required>
+                    </div>
+                    <div class="form-element">
+                        <label for="faculty_type">Role</label>
+                        <div class="select-box">
+                        <select id="faculty_type" name="faculty_type">
+                            <option value="">-- Please select --</option>
+                            <option value="full_time">Registrar</option>
+                            <option value="part_time">Department Head</option>
+                        </select>
+                    </div>
+                    </div>
+                     <!-- Automatically includes the CSRF token -->
+                     <div class="form-element">
+                    <button type="submit">Add Program</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <script src="{{ url_for('static', filename='js/scripts/admin/admin.js') }}"></script>
     </body>

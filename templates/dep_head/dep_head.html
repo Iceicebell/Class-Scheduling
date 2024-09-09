@@ -11,9 +11,9 @@
     </head>
 
     <body>
-        <div class="container">
+        <div class="container1">
             <header>
-                <nav class="navbar">
+                <nav class="navbar1">
                     <div class="nav-section nav-left">
                         <button class="nav-button menu-button">
                             <i class='bx bx-menu'></i>
@@ -25,8 +25,7 @@
                     </div>
 
                     <div class="nav-section nav-center">
-                        <form class="search-form">
-                        </form>
+                        <h3>{{session.get('department')}} Department</h3>
                     </div>
 
                     <div class="nav-section nav-right">
@@ -51,7 +50,7 @@
                         </a>
                     </div>
 
-                    <div class="link-container">
+                    <div class="link-container1">
                         <div class="link-section ">
                             <a href="{{ url_for('my_blueprint.program') }}" class="link-item {% if current_endpoint == 'my_blueprint.program' %}active{% endif %}">
                                 <i class="active bx bxs-home"></i>Program

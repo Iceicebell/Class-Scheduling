@@ -13,7 +13,6 @@
     --dark-color: #4a8d87;
     --background: rgb(59, 112, 151);
 }
-
 .table{
     width: calc(100%-100px);
     margin-left: 50px;
@@ -82,8 +81,11 @@
 .coolinput input[type=number].input:focus {
     outline: none;
   }
+.table_section{
+    overflow: auto;
+}
 table{
-    width: 90%;
+    width: 100%;
     table-layout: fixed;
     min-width: 700px;
     border-collapse: collapse;

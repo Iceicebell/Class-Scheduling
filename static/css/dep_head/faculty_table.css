@@ -78,7 +78,7 @@ td button:nth-child(2){
 }
 
 table{
-    width: 90%;
+    width: 100%;
     table-layout: fixed;
     min-width: 700px;
     border-collapse: collapse;

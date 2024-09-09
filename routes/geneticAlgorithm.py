@@ -6,7 +6,7 @@ from functools import wraps
 from flask import g
 from flask_mysqldb import MySQL
 from flask_wtf import FlaskForm
-from wtforms import HiddenField, SelectField, StringField, SubmitField
+from wtforms import HiddenField, IntegerField, SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError, EqualTo
 import logging
 from flask import current_app
@@ -31,8 +31,8 @@ bp = Blueprint('algorithm', __name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-POPULATION_SIZE = 25
-MAX_GENERATIONS = 50
+POPULATION_SIZE = 5
+MAX_GENERATIONS = 5
 MUTATION_RATE = 0.1
     
 class Solution:
@@ -226,11 +226,11 @@ class Solution:
                         end_time1 = start_hour1 + duration1
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1:  # Overlap check
-                            conflicts_penalty += 100  # Simple penalty, adjust based on severity
+                            conflicts_penalty += 200  # Simple penalty, adjust based on severity
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         if faculty_id1 == faculty_id2:  # Faculty conflict
-                            conflicts_penalty += 100  # Adjust penalty as needed
+                            conflicts_penalty += 200  # Adjust penalty as needed
 
         # Penalty for disregarding lunch breaks
         for section_id, assignments in self.schedule.items():
@@ -251,8 +251,8 @@ class Solution:
 
         # Reward for efficient utilization (simple example: reward for filling morning and afternoon slots)
         for section_id, assignments in self.schedule.items():
-            morning_slots_filled = sum(1 for _, day, start_hour, _, _, _ in assignments if start_hour < 12)
-            afternoon_slots_filled = sum(1 for _, day, start_hour, _, _, _ in assignments if start_hour >= 13)
+            morning_slots_filled = sum(10 for _, day, start_hour, _, _, _ in assignments if start_hour < 12)
+            afternoon_slots_filled = sum(10 for _, day, start_hour, _, _, _ in assignments if start_hour >= 13)
             efficiency_reward += min(morning_slots_filled, afternoon_slots_filled)  # Encourage balance
 
         # Calculate total fitness score
@@ -361,7 +361,6 @@ def get_course_details(cursor, course_id):
         raise ValueError(f"Course details not found for course_id: {course_id}")
     
 
-
 def crossover(parent1, parent2):
     # Initialize the child's schedule and shared_schedule as empty dictionaries
     child_schedule = {}
@@ -440,18 +439,18 @@ def mutate(self, cursor):
 
 
 def generate_initial_solution():
-
     solution = Solution(shared_schedule={})
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor()
     try:
+        # Fetch sections owned by the current user
         cursor.execute("""
-            SELECT sections.section_id, courses.course_id, courses.units, courses.course_code, courses.course_block
-            FROM sections
-            JOIN section_courses ON sections.section_id = section_courses.section_id
-            JOIN courses ON section_courses.course_id = courses.course_id
-            WHERE sections.department = %s;
-        """,(session.get('department'),))
+            SELECT s.section_id, c.course_id, c.units, c.course_code, c.course_block
+            FROM sections s
+            JOIN section_courses sc ON s.section_id = sc.section_id
+            JOIN courses c ON sc.course_id = c.course_id
+            WHERE s.user_id = %s;
+        """, (session.get('user_id'),))
         sections_data = cursor.fetchall()
 
         # Fetch unavailable times for each section to mark them in the schedule
@@ -476,10 +475,10 @@ def generate_initial_solution():
 
             for section_id, course_id, units in courses:
                 units_decimal = Decimal(units)
-                logging.debug(f"Processing course {course_id} with units {units_decimal}")
+                # logging.debug(f"Processing course {course_id} with units {units_decimal}")
                 if units_decimal > Decimal(2):
                     split_duration_decimal = units_decimal / Decimal(2)
-                    logging.debug(f"Split duration_decimal for course {course_id}: {split_duration_decimal}")
+                    # logging.debug(f"Split duration_decimal for course {course_id}: {split_duration_decimal}")
                     solution.add_course_assignment(section_id, course_id, day, start_hour, split_duration_decimal, course_code, course_block, cursor)
                     solution.add_course_assignment(section_id, course_id, second_day, start_hour, split_duration_decimal, course_code, course_block, cursor)
                 else:
@@ -493,11 +492,12 @@ def generate_initial_solution():
 
 
 
-def select_parents(population):
-    # Example: Random selection for simplicity. Implement a more sophisticated method based on fitness.
-    parent1 = random.choice(population)
-    parent2 = random.choice(population)
-    return parent1, parent2
+def select_parents(population, tournament_size=3):
+    def tournament(population, size):
+        tournament_group = random.sample(population, size)
+        return max(tournament_group, key=lambda x: x.fitness_score)
+
+    return tournament(population, tournament_size), tournament(population, tournament_size)
 
 def run_genetic_algorithm(initial_solution):
     db = mysql.connector.connect(**db_config)
@@ -551,8 +551,43 @@ def get_best_solution():
     return run_genetic_algorithm(initial_solution)
 
 class GenerateForm(FlaskForm):
+    population_size = IntegerField('Population Size', default=50)
+    max_generations = IntegerField('Max Generations', default=100)
     submit = SubmitField('Generate Schedule')
-
+def generate_faculty_timetable(cursor, current_user_id):
+    faculty_timetable = {}
+    
+    # Fetch faculty names for the current user's sections
+    cursor.execute("SELECT faculty_id, first_name, last_name FROM faculty WHERE faculty_id IN (SELECT faculty_id FROM courses WHERE course_id IN (SELECT course_id FROM section_courses WHERE section_id IN (SELECT section_id FROM sections WHERE user_id = %s)))", (current_user_id,))
+    faculty_data = cursor.fetchall()
+    faculty_names = {faculty_id: f"{first_name} {last_name}" for faculty_id, first_name, last_name in faculty_data}
+    
+    # Fetch all course assignments from the database
+    cursor.execute("SELECT user_id, section_id, course_id, day, start_hour, duration, course_code, course_block FROM user_solutions")
+    course_assignments = cursor.fetchall()
+    
+    # Iterate through the course assignments
+    for user_id, section_id, course_id, day, start_hour, duration, course_code, course_block in course_assignments:
+        # Fetch faculty ID for this course
+        cursor.execute("SELECT faculty_id FROM courses WHERE course_id = %s", (course_id,))
+        result = cursor.fetchone()
+        faculty_id = result[0] if result else None
+        
+        if faculty_id and faculty_id in faculty_names:
+            faculty_name = faculty_names[faculty_id]
+            
+            if faculty_name not in faculty_timetable:
+                faculty_timetable[faculty_name] = {'courses': {}, 'unavailable': {}}
+            
+            course_key = f"{course_code}/{course_block}"
+            if course_key not in faculty_timetable[faculty_name]['courses']:
+                faculty_timetable[faculty_name]['courses'][course_key] = {}
+            faculty_timetable[faculty_name]['courses'][course_key][day] = {
+                'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
+                'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
+            }
+    
+    return faculty_timetable
 
 @bp.route('/department-head/generate', methods=['GET', 'POST'])
 def generate():
@@ -563,91 +598,98 @@ def generate():
     if session.get('user_role') != 'dept-head':
         abort(403)
 
-    form = GenerateForm()
+    db = mysql.connector.connect(**db_config)
+    cursor = db.cursor()
+    # Fetch the saved schedule from the database
+    cursor.execute("""
+        SELECT user_id, section_id, course_id, day, start_hour, duration, course_code, course_block
+        FROM user_solutions
+        WHERE user_id = %s
+    """, (session['user_id'],))
 
-    if form.validate_on_submit():
-        # Run the genetic algorithm and get the best solution
-        best_solution = get_best_solution()
-        
-        display_schedule = {}
-        for section_id, courses in best_solution.schedule.items():
-            display_schedule[section_id] = {
-                'courses': {},
-                'unavailable': {}
-            }
-            def decimal_to_time(decimal_hours):
-                hours = int(decimal_hours // 1)
-                minutes = int((decimal_hours % 1) * 60)
-                return f"{hours}:{minutes:02d}"
+    saved_solutions = cursor.fetchall()
+    
+    # Fetch all sections owned by the current user
+    cursor.execute("SELECT section_id, section_name FROM sections WHERE user_id = %s", (session['user_id'],))
+    sections = cursor.fetchall()
+    
+    # Create a dictionary mapping section_ids to section_names
+    section_names = {row[0]: row[1] for row in sections}
+
+    display_schedule = {}
+    for user_id, section_id, course_id, day, start_hour, duration, course_code, course_block in saved_solutions:
+        section_name = section_names.get(section_id, f"Section {section_id}")
+        if section_name not in display_schedule:
+            display_schedule[section_name] = {'courses': {}, 'unavailable': {}}
             
-            for course_id, day, start_hour, duration, course_code, course_block in courses:
-                if course_id == -1:  # Unavailable time
-                    if day not in display_schedule[section_id]['unavailable']:
-                        display_schedule[section_id]['unavailable'][day] = []
-                    display_schedule[section_id]['unavailable'][day].append({
-                        'start_hour': decimal_to_time(float(start_hour)),
-                        'end_hour': decimal_to_time(float(start_hour + duration))
-                    })
-                else:  # Regular course
-                    course_key = f"{course_code}/{course_block}"
-                    if course_key not in display_schedule[section_id]['courses']:
-                        display_schedule[section_id]['courses'][course_key] = {}
-                    display_schedule[section_id]['courses'][course_key][day] = {
-                        'start_hour': decimal_to_time(float(start_hour)),
-                        'end_hour': decimal_to_time(float(start_hour + duration))
-                    }
-        
-        # If it's an AJAX request, return only the schedule HTML
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            schedule_html = render_template_string('''
-                {% for section_id, courses in schedule.items() %}
-                <div class="table">
-                    <div class="table_header">
-                        <p>Section {{ section_id }}</p>
-                    </div>
-                    <div class="table-section">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Course Code/ Block</th>
-                                    <th>Monday</th>
-                                    <th>Tuesday</th>
-                                    <th>Wednesday</th>
-                                    <th>Thursday</th>
-                                    <th>Friday</th>
-                                    <th>Saturday</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for course_code_block, schedule in courses.items() %}
-                                <tr>
-                                    <td>{{ course_code_block }}</td>
-                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
-                                        <td>
-                                            {% if day in schedule %}
-                                                {{ schedule[day]['start_hour'] }}-{{ schedule[day]['end_hour'] }}
-                                            {% endif %}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endfor %}
-            ''', schedule=display_schedule)
-            return schedule_html
-        
-        # For normal POST requests, render the full template
+        if course_id == -1:  # Unavailable time
+            if day not in display_schedule[section_name]['unavailable']:
+                display_schedule[section_name]['unavailable'][day] = []
+            display_schedule[section_name]['unavailable'][day].append({
+                    'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
+                    'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
+                })
+        else:  # Regular course
+            course_key = f"{course_code}/{course_block}"
+            if course_key not in display_schedule[section_name]['courses']:
+                display_schedule[section_name]['courses'][course_key] = {}
+            display_schedule[section_name]['courses'][course_key][day] = {
+                    'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
+                    'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
+                }
+    form =  GenerateForm()
+    faculty_timetable = None 
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            global POPULATION_SIZE, MAX_GENERATIONS
+            POPULATION_SIZE = form.population_size.data
+            MAX_GENERATIONS = form.max_generations.data
+
+            # Run the genetic algorithm and get the best solution
+            best_solution = get_best_solution()
+
+            # Clear existing solutions for this user
+            cursor.execute("DELETE FROM user_solutions WHERE user_id = %s", (session['user_id'],))
+
+            # Save the best solution to the database
+            for section_id, courses in best_solution.schedule.items():
+                for course_id, day, start_hour, duration, course_code, course_block in courses:
+                    query = """
+                        INSERT INTO user_solutions 
+                        (id, user_id, section_id, course_id, day, start_hour, duration, course_code, course_block)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """
+                    cursor.execute(query, (
+                        None,
+                        session['user_id'],
+                        section_id,
+                        course_id,
+                        day,
+                        float(start_hour),
+                        float(duration),
+                        course_code,
+                        course_block
+                    ))
+
+            # Commit the changes
+            db.commit()
+
+        faculty_timetable = generate_faculty_timetable(cursor, session.get('user_id'))
+            
+
+        # Render the template with the fetched schedule
         return render_template('dep_head/generate.html',
                                form=form,
                                schedule=display_schedule,
+                               faculty_timetable=faculty_timetable,
+                               sections=sections,
                                current_endpoint=request.endpoint)
-    
+
+    faculty_timetable = generate_faculty_timetable(cursor, session['user_id'])
     # If it's a GET request or form validation failed, just render the template without a schedule
     return render_template('dep_head/generate.html',
                            form=form,
+                           schedule=display_schedule,
+                           faculty_timetable=faculty_timetable,
+                           sections=sections,
                            current_endpoint=request.endpoint)
-
-

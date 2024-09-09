@@ -7,12 +7,17 @@
 {% extends "dep_head/dep_head.html" %}
 
 {% block content %}
-    <div class="container1">
+    <div class="container2">
         {% for program in programs %}
     <div class="box">
         <h3>{{ program[1] }}</h3> <!-- Assuming the first column is the program name -->
-        <a href="{{ url_for('my_blueprint.dep_head_content', program_id=program[0]) }}"><button>View</button></a>
-        <span class="count">{{ program[0] }}</span> <!-- Assuming the second column is the program ID -->
+        <a href="{{ url_for('my_blueprint.dep_head_content', program_id=program[0]) }}"><button class="view">View</button></a>
+        <span class="count">
+            <a href="{{ url_for('my_blueprint.edit_program', program_id=program[0]) }}" class="edit-button"><i class='bx bxs-pencil'></i></a>
+            <button type="button" class="delete-button" onclick="deleteProgram('{{ program[0] }}')">
+                <i class='bx bxs-trash-alt'></i>
+            </button>
+        </span> <!-- Assuming the second column is the program ID -->
     </div>
 {% endfor %}
 
@@ -35,6 +40,31 @@
         </div>
     </div>
     <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
-
-
+    
+    <script>
+        function deleteProgram(programId) {
+            if (confirm("Are you sure you want to delete this program?")) {
+                fetch('/delete-program/' + programId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ form.csrf_token }}'
+                    },
+                    body: JSON.stringify({program_id: programId})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the program.');
+                });
+            }
+        }
+        </script>
 {% endblock %}

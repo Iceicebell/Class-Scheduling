@@ -15,7 +15,7 @@
         {% extends "dep_head/dep_head.html" %}
         {% block content %}  
         <span class="body">
-        <div class="container1">
+        <div class="container2">
             <div class="tab_box">
                 <button class="tab_btn active">1st Year</button>
                 <button class="tab_btn">2nd Year</button>
@@ -31,7 +31,7 @@
                             <p>1st Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -39,7 +39,7 @@
                                         <th>Course Name</th>
                                         <th>Block</th>
                                         <th>Type</th>
-                                        <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -71,7 +71,7 @@
                             <p>2nd Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -79,7 +79,7 @@
                                         <th>Course Name</th>
                                         <th>Block</th>
                                         <th>Type</th>
-                                        <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -111,7 +111,7 @@
                             <p>3rd Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -119,7 +119,7 @@
                                         <th>Course Name</th>
                                         <th>Block</th>
                                         <th>Type</th>
-                                        <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -151,7 +151,7 @@
                             <p>4th Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -159,7 +159,7 @@
                                         <th>Course Name</th>
                                         <th>Block</th>
                                         <th>Type</th>
-                                        <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -201,8 +201,8 @@
                         <input type="text" id="course_name" name="course_name" placeholder="Course Name" required>
                     </div>
                     <div class="form-element">
-                        <label for="units">Units</label>
-                        <input type="number" id="units" name="units" placeholder="Number of hours per week" required>
+                        <label for="hours_per_week">hours_per_week</label>
+                        <input type="number" id="hours_per_week" name="hours_per_week" placeholder="Number of hours per week" required>
                     </div>
                     <div class="form-element">
                         <label for="block">Block</label>
@@ -247,7 +247,7 @@
                     </div>
                      <!-- Automatically includes the CSRF token -->
                      <div class="form-element">
-                    <button type="submit">Add Program</button>
+                    <button type="submit">Add Course</button>
                     </div>
                 </form>
             </div>

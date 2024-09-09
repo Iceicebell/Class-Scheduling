@@ -5,7 +5,7 @@
     --background: rgb(59, 112, 151);
 }
 
-.container1{
+.container2{
     width: 100%;
     display: flex;
     flex-wrap: wrap;
@@ -39,8 +39,7 @@
     font-size: 15px;
     color: var(--second);
 }
-
-.box button{
+.view{
     width: 140px;
     height: 40px;
     background-color: var(--background);
@@ -53,7 +52,7 @@
     margin-top: 20px;
 }
 
-.box button:hover{
+.view:hover{
     letter-spacing: 2px;
     opacity: .8;
 }
@@ -85,12 +84,18 @@
 .box .count{
     position: absolute;
     top: 15px;
-    right: 30px;
-    font-size: 50px;
+    right: 15px;
+    font-size: 20px;
     font-weight: bolder;
-    color: #fff;
 }
-
+.count .bx.bxs-trash-alt{
+    color: rgb(253, 52, 52);
+}
+.delete-button{
+    background: none;
+    border: none;
+    font-size: 20px;
+}
 .box:nth-child(even):after{
     background-color: var(--dark-color);
     background-image: linear-gradient(160deg, --background 0%, --lightest 100%);
@@ -114,7 +119,7 @@
     color: #fff;
 }
 
-.box:hover button{
+.box:hover .view{
     color: var(--background);
     background-color: #fff;
 }
