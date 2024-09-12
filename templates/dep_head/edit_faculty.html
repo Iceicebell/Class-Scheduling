@@ -26,7 +26,10 @@
                             {{ form.faculty_type.label(class_="form-label") }}
                             {{ form.faculty_type(class_="form-select") }}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Faculty</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary w-100">Update Faculty</button>
+                            <a href="{{ url_for('my_blueprint.faculties') }}" class="btn btn-secondary w-100">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>

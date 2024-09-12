@@ -1,6 +1,7 @@
 from flask import Flask, make_response, render_template, url_for, redirect, flash, session
 from routes.routes import bp as my_blueprint
 from routes.geneticAlgorithm import bp as algorithm
+from routes.roomAlgorithm import bp as RoomAlgorithm
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, HiddenField, SelectField
 from wtforms.validators import DataRequired, Email, ValidationError, EqualTo
@@ -24,6 +25,7 @@ def create_app():
 
     app.register_blueprint(my_blueprint)
     app.register_blueprint(algorithm)
+    app.register_blueprint(RoomAlgorithm)
 
 
     with app.app_context():

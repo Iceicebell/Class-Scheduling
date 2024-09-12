@@ -62,7 +62,7 @@ def add_faculty_to_db(first_name, last_name, faculty_units, faculty_type,departm
     cur = g.mysql.connection.cursor()
     try:
         # Adjust the INSERT statement according to your faculties table structure
-        cur.execute("INSERT INTO faculty (first_name, last_name, faculty_units, faculty_type, department) VALUES (%s, %s, %s, %s, %s)",
+        cur.execute("INSERT INTO faculties (first_name, last_name, faculty_units, faculty_type, department) VALUES (%s, %s, %s, %s, %s)",
                   (first_name, last_name, faculty_units, db_faculty_type, department))
         g.mysql.connection.commit()
     except Exception as e:
@@ -97,7 +97,7 @@ def faculties():
 
         if department:
             # Now, fetch faculty members from the same department
-            cur.execute("SELECT * FROM faculty WHERE department = %s", (department,))
+            cur.execute("SELECT * FROM faculties WHERE department = %s", (department,))
             faculty_members = cur.fetchall()
             cur.close()
 
@@ -135,7 +135,7 @@ def delete_faculty(faculty_id):
     # Check if the faculty exists
     cur = g.mysql.connection.cursor()
     try:
-        cur.execute("SELECT * FROM faculty WHERE faculty_id = %s", (faculty_id,))
+        cur.execute("SELECT * FROM faculties WHERE faculty_id = %s", (faculty_id,))
         faculty = cur.fetchone()
         if not faculty:
             logger.error(f"Faculty with ID {faculty_id} not found.")
@@ -161,7 +161,7 @@ def delete_faculty(faculty_id):
             cur.execute("UPDATE courses SET faculty_id = NULL WHERE course_id = %s", (course[0],))
 
         # Delete the faculty
-        cur.execute("DELETE FROM faculty WHERE faculty_id = %s", (faculty_id,))
+        cur.execute("DELETE FROM faculties WHERE faculty_id = %s", (faculty_id,))
         g.mysql.connection.commit()
 
         logger.info(f"Faculty with ID {faculty_id} and associated courses deleted successfully.")
@@ -189,7 +189,7 @@ def edit_faculty(faculty_id):
     current_user_department = session.get('department')
     cur = g.mysql.connection.cursor()
     try:
-        cur.execute("SELECT department FROM faculty WHERE faculty_id = %s", (faculty_id,))
+        cur.execute("SELECT department FROM faculties WHERE faculty_id = %s", (faculty_id,))
         faculty_department = cur.fetchone()
 
         if not faculty_department:
@@ -204,7 +204,7 @@ def edit_faculty(faculty_id):
         session['current_faculty_id'] = faculty_id
 
         # Fetch the faculty details
-        cur.execute("SELECT first_name, last_name, faculty_units, faculty_type FROM faculty WHERE faculty_id = %s", (faculty_id,))
+        cur.execute("SELECT first_name, last_name, faculty_units, faculty_type FROM faculties WHERE faculty_id = %s", (faculty_id,))
         faculty_data = cur.fetchone()
         if not faculty_data:
             flash('Faculty not found.', 'error')
@@ -228,7 +228,7 @@ def edit_faculty(faculty_id):
 
             try:
                 cur = g.mysql.connection.cursor()
-                cur.execute("UPDATE faculty SET first_name = %s, last_name = %s, faculty_units = %s, faculty_type = %s WHERE faculty_id = %s",
+                cur.execute("UPDATE faculties SET first_name = %s, last_name = %s, faculty_units = %s, faculty_type = %s WHERE faculty_id = %s",
                             (form.first_name.data, form.last_name.data, form.faculty_units.data, form.faculty_type.data, faculty_id))
                 g.mysql.connection.commit()
                 logger.debug(f"Affected rows: {cur.rowcount}")
@@ -524,7 +524,7 @@ def view_section(section_id):
     cur.execute("""
         SELECT c.course_id, c.course_code, c.course_name, c.course_block, c.course_type, c.units, f.first_name, f.last_name
         FROM courses c
-        LEFT JOIN faculty f ON c.faculty_id = f.faculty_id
+        LEFT JOIN faculties f ON c.faculty_id = f.faculty_id
         WHERE c.program_id = %s
           AND c.course_level = %s
           AND c.course_id NOT IN (
@@ -566,9 +566,9 @@ def get_selected_courses():
     cur = g.mysql.connection.cursor()
     try:
         
-        cur.execute("SELECT c.course_code, c.course_name FROM courses c JOIN section_courses sc ON c.course_id = sc.course_id WHERE sc.section_id = %s", (section_id,))
+        cur.execute("SELECT c.course_code, c.course_name,c.course_block FROM courses c JOIN section_courses sc ON c.course_id = sc.course_id WHERE sc.section_id = %s", (section_id,))
         selected_courses = cur.fetchall()
-        return jsonify([{'course_code': c[0], 'course_name': c[1]} for c in selected_courses])
+        return jsonify([{'course_code': c[0], 'course_name': c[1], 'course_block': c[2]} for c in selected_courses])
     except Exception as e:
         return jsonify({'message': f'Failed to fetch selected courses: {str(e)}'}), 400
     finally:
@@ -603,6 +603,7 @@ def create():
 class AddCourseForm(FlaskForm):
     course_name = StringField('Course Name', validators=[DataRequired()])
     course_code = StringField('Course Code', validators=[DataRequired()])
+    units = StringField('Units', validators=[DataRequired()])
     hours_per_week = StringField('Hours Per Week', validators=[DataRequired()])
     course_block = StringField('Block', validators=[DataRequired()])
     course_type = SelectField('Type', choices=[('lecture', 'Lecture'), ('comp_lab', 'Comp Laboratory'), ('eng_lab', 'Engineering Laboratory')], validators=[DataRequired()])
@@ -610,7 +611,7 @@ class AddCourseForm(FlaskForm):
     faculty = SelectField('Faculty', validators=[Optional()])
     submit = SubmitField('Add Course')
 
-def add_course_to_db(course_name, course_code, units, course_block, course_type, year_level, program_id, faculty_id=None):
+def add_course_to_db(course_name, course_code, units, hours_per_week, course_block, course_type, year_level, program_id, faculty_id=None):
     # Mapping for course_type to match database expectations
     course_type_mapping = {
         'lecture': 'Lecture',
@@ -633,13 +634,13 @@ def add_course_to_db(course_name, course_code, units, course_block, course_type,
     cur = g.mysql.connection.cursor()
     try:
         # Adjust the INSERT statement according to your courses table structure
-        cur.execute("INSERT INTO courses (course_name, course_code, units, course_block, course_type, course_level, program_id, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                  (course_name, course_code, units, course_block, db_course_type, db_year_level, program_id, faculty_id))
+        cur.execute("INSERT INTO courses (course_name, course_code, units, hours_per_week, course_block, course_type, course_level, program_id, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                  (course_name, course_code, units, hours_per_week, course_block, db_course_type, db_year_level, program_id, faculty_id))
         g.mysql.connection.commit()
 
         if faculty_id:
             cur.execute("""
-                UPDATE faculty 
+                UPDATE faculties 
                 SET faculty_used_units = faculty_used_units + %s 
                 WHERE faculty_id = %s
             """, (units, faculty_id))
@@ -656,7 +657,8 @@ def add_course_to_db(course_name, course_code, units, course_block, course_type,
 def add_course():
     cur = g.mysql.connection.cursor()
     try:
-        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculty")
+        # Update this query to use the new table name 'faculties'
+        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculties")
         faculties = cur.fetchall()
     except Exception as e:
         logger.error(f"An error occurred: {e}")
@@ -671,6 +673,7 @@ def add_course():
         print("Form is valid")
         course_name = form.course_name.data
         course_code = form.course_code.data
+        units = form.units.data
         hours_per_week = form.hours_per_week.data
         block = form.course_block.data
         course_type = form.course_type.data
@@ -686,7 +689,7 @@ def add_course():
         print(year_level )
         print(faculty_id )
         
-        add_course_to_db(course_name, course_code, hours_per_week, block, course_type, year_level, program_id,faculty_id=faculty_id)
+        add_course_to_db(course_name, course_code,units, hours_per_week, block, course_type, year_level, program_id,faculty_id=faculty_id)
         flash('Course added successfully!', 'success')
         return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))  # Redirect back to the department head content page after adding the course
     else:
@@ -704,8 +707,201 @@ def execute_query(query, params):
         cur.close()
 
 
+# Edit Course Form
+class EditCourseForm(FlaskForm):
+    course_name = StringField('Course Name', validators=[DataRequired()])
+    course_code = StringField('Course Code', validators=[DataRequired()])
+    units = StringField('Units', validators=[DataRequired()])
+    hours_per_week = StringField('Hours Per Week', validators=[DataRequired()])
+    course_block = StringField('Block', validators=[DataRequired()])
+    course_type = SelectField('Type', choices=[('lecture', 'Lecture'), ('comp_lab', 'Comp Laboratory'), ('eng_lab', 'Engineering Laboratory')], validators=[DataRequired()])
+    year_level = SelectField('Year Level', choices=[('1st Year', '1st Year'), ('2nd Year', '2nd Year'), ('3rd Year', '3rd Year'), ('4th Year', '4th Year')], validators=[DataRequired()])
+    faculty = SelectField('Faculty', choices=[], validators=[Optional()])
+    submit = SubmitField('Update Course')
+
+# Function to update course in the database
+def update_course_to_db(course_id, course_name, course_code, units, hours_per_week, course_block, course_type, year_level, program_id, faculty_id=None, new_faculty_id=None):
+    # Mapping for course_type to match database expectations
+    course_type_mapping = {
+        'lecture': 'Lecture',
+        'comp_lab': 'Comp Laboratory',
+        'eng_lab': 'Engineering Laboratory'
+    }
+
+    # Mapping for year_level to match database expectations
+    year_level_mapping = {
+        '1st Year': '1st Year',
+        '2nd Year': '2nd Year',
+        '3rd Year': '3rd Year',
+        '4th Year': '4th Year'
+    }
+
+    # Transform course_type and year_level inputs
+    db_course_type = course_type_mapping.get(course_type, course_type)
+    db_year_level = year_level_mapping.get(year_level, year_level)
+
+    try:
+        cur = g.mysql.connection.cursor()
+        
+        # First, fetch the current faculty_id for the course
+        cur.execute("SELECT faculty_id FROM courses WHERE course_id = %s", (course_id,))
+        old_faculty_id = cur.fetchone()[0] if cur.rowcount > 0 else None
+
+        # Update the course
+        cur.execute("UPDATE courses SET course_name = %s, course_code = %s, units = %s, hours_per_week = %s, course_block = %s, course_type = %s, course_level = %s, program_id = %s, faculty_id = %s WHERE course_id = %s",
+                    (course_name, course_code, units, hours_per_week, course_block, course_type, year_level, program_id, new_faculty_id, course_id))
 
 
+        # Update faculty_used_units for the old faculty (if it exists)
+        if old_faculty_id:
+            cur.execute("UPDATE faculties SET faculty_used_units = faculty_used_units - %s WHERE faculty_id = %s", (units, old_faculty_id))
+
+        # Update faculty_used_units for the new faculty (if it exists)
+        if new_faculty_id:
+            cur.execute("UPDATE faculties SET faculty_used_units = faculty_used_units + %s WHERE faculty_id = %s", (units, new_faculty_id))
+
+        g.mysql.connection.commit()
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        # Handle exception, maybe rollback transaction here
+    finally:
+        cur.close()
+
+# Route for editing a course
+@bp.route('/edit-course/<int:course_id>', methods=['GET', 'POST'])
+def edit_course(course_id):
+    logger.debug(f"Received request for course_id: {course_id}")
+    logger.debug(f"Request method: {request.method}")
+
+    # Ownership check
+    current_user_id = session.get('user_id')
+    cur = g.mysql.connection.cursor()
+    try:
+        # Fetch the program_id for the given course
+        cur.execute("SELECT program_id FROM courses WHERE course_id = %s", (course_id,))
+        course_program = cur.fetchone()
+        
+        if not course_program:
+            flash('Course not found.', 'error')
+            return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))
+
+        # Check if the program belongs to the current user
+        cur.execute("SELECT user_id FROM programs WHERE program_id = %s", (course_program[0],))
+        program_user = cur.fetchone()
+
+        if not program_user or program_user[0] != current_user_id:
+            flash('You do not have permission to edit this course.', 'error')
+            return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))
+
+        # If we reach here, the course belongs to a program owned by the current user
+        session['current_course_id'] = course_id
+
+        # Fetch the course details
+        cur.execute("SELECT course_name, course_code, units, hours_per_week, course_block, course_type, course_level, program_id, faculty_id FROM courses WHERE course_id = %s", (course_id,))
+        course_data = cur.fetchone()
+        if not course_data:
+            flash('Course not found.', 'error')
+            return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))
+
+        # Fetch all faculties for the current user's department
+        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculties WHERE department = %s", (session.get('department'),))
+        faculties = cur.fetchall()
+
+        # Create the form and set faculty choices
+        form = EditCourseForm()
+        form.faculty.choices = [('','No Faculty')] + [(str(faculty[0]), faculty[1]) for faculty in faculties]
+
+        # Set the default faculty to the current faculty
+        current_faculty_id = course_data[8]
+        if current_faculty_id is not None:
+            form.faculty.default = str(current_faculty_id)
+        else:
+            form.faculty.default = ''
+        form.faculty.process_data(form.faculty.default)
+
+        if form.validate_on_submit():
+
+            try:
+                update_course_to_db(
+                    course_id,
+                    form.course_name.data,
+                    form.course_code.data,
+                    form.units.data,
+                    form.hours_per_week.data,
+                    form.course_block.data,
+                    form.course_type.data,
+                    form.year_level.data,
+                    program_id=session.get('current_program_id', None),
+                    new_faculty_id=None if form.faculty.data == '' else form.faculty.data
+                )
+                flash('Course updated successfully!', 'success')
+            except Exception as e:
+                logger.error(f"An error occurred: {e}")
+                flash('Failed to update course.', 'danger')
+
+            return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))
+
+        # Pre-populate the form with existing data
+        form.course_name.data = course_data[0]
+        form.course_code.data = course_data[1]
+        form.units.data = course_data[2]
+        form.hours_per_week.data = course_data[3]
+        form.course_block.data = course_data[4]
+        form.course_type.data = course_data[5]
+        form.year_level.data = course_data[6]
+
+        return render_template('dep_head/edit_course.html',
+                               form=form,
+                               course_id=course_id,
+                               current_endpoint=request.endpoint)
+
+    except Exception as e:
+        logger.error(f"An error occurred during ownership check: {str(e)}")
+        flash('An error occurred while processing your request.', 'error')
+    finally:
+        cur.close()
+
+    return redirect(url_for('my_blueprint.dep_head_content', program_id=session.get('current_program_id', None)))
+
+# Route for deleting a course
+@bp.route('/delete-course/<int:course_id>', methods=['DELETE'])
+def delete_course(course_id):
+    try:
+        cur = g.mysql.connection.cursor()
+        
+        # Fetch the program_id for the given course
+        cur.execute("SELECT program_id FROM courses WHERE course_id = %s", (course_id,))
+        course_program = cur.fetchone()
+
+        if not course_program:
+            return jsonify({'success': False, 'message': 'Course not found.'}), 404
+
+        # Check if the program belongs to the current user
+        cur.execute("SELECT user_id FROM programs WHERE program_id = %s", (course_program[0],))
+        program_user = cur.fetchone()
+
+        if not program_user or program_user[0] != session.get('user_id'):
+            return jsonify({'success': False, 'message': 'You do not have permission to delete this course.'}), 403
+
+        # Delete associated entries from section_courses table
+        cur.execute("DELETE FROM section_courses WHERE course_id = %s", (course_id,))
+        logger.debug(f"Deleted {cur.rowcount} entries from section_courses table")
+
+        # Delete the course itself
+        cur.execute("DELETE FROM courses WHERE course_id = %s", (course_id,))
+        logger.debug(f"Deleted {cur.rowcount} entries from courses table")
+
+        g.mysql.connection.commit()
+        logger.debug("Changes committed to the database")
+
+        return jsonify({'success': True, 'message': 'Course deleted successfully'}), 200
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        cur.close()
 
 
 # ========================================================Program1======================================================
@@ -738,15 +934,15 @@ def dep_head_content(program_id):
         # If we reach here, the program belongs to the current user
         session['current_program_id'] = program_id
 
-        # Adjusted query to join with faculty and select faculty names
+        # Adjusted query to join with faculty and select faculty names, including hours_per_week
         query_template = """
-        SELECT courses.course_code, courses.course_name, courses.course_block, courses.course_type, courses.units, CONCAT(faculty.first_name, ' ', faculty.last_name) AS faculty_name
+        SELECT courses.course_id, courses.course_code, courses.course_name, courses.course_block, courses.course_type, courses.units, courses.hours_per_week, CONCAT(faculties.first_name, ' ', faculties.last_name) AS faculty_name
         FROM courses
-        LEFT JOIN faculty ON courses.faculty_id = faculty.faculty_id
+        LEFT JOIN faculties ON courses.faculty_id = faculties.faculty_id
         WHERE courses.program_id = %s AND courses.course_level = %s
         """
 
-        # Fetch courses for each year level, including faculty names
+        # Fetch courses for each year level, including faculty names and hours_per_week
         courses1 = execute_query(query_template, (program_id, '1st Year'))
         courses2 = execute_query(query_template, (program_id, '2nd Year'))
         courses3 = execute_query(query_template, (program_id, '3rd Year'))
@@ -755,7 +951,7 @@ def dep_head_content(program_id):
         faculties = []
         try:
             cur = g.mysql.connection.cursor()
-            cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculty WHERE department = %s",(session.get('department'),))
+            cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculties WHERE department = %s",(session.get('department'),))
             faculties = cur.fetchall()
         except Exception as e:
             logger.error(f"An error occurred: {e}")
@@ -780,7 +976,6 @@ def dep_head_content(program_id):
         return redirect(url_for('my_blueprint.program'))
     finally:
         cur.close()
-
 
 class EditProgramForm(FlaskForm):
     program_name = StringField('Program Name', validators=[DataRequired()])
@@ -1018,5 +1213,18 @@ def registrar():
         abort(403)
     return render_template('registrar/registrar.html')
 
+@bp.route('/registrar/room')
+def room():
+    if session.get('isVerified') ==False:
+        return redirect(url_for('my_blueprint.new_user'))
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'registrar':
+        abort(403)
+    return render_template('registrar/room.html')
 
 
+
+@bp.route('/trial')
+def trial():
+    return render_template('dep_head/for_trial.html')

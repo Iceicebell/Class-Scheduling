@@ -1,0 +1,251 @@
+
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/dep_content.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_table.css') }}">
+</head>
+
+<body>
+    {% extends "registrar/registrar.html" %}
+    {% block content %}  
+    <span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button class="tab_btn active">1st Floor</button>
+            <button class="tab_btn">2nd Floor</button>
+            <button class="tab_btn">3rd Floor</button>
+            <button class="tab_btn">4th Floor</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                <div class="table">
+                    <div class="table_header">
+                        <p>1st Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Block</th>
+                                    <th>Type</th>
+                                    <th>Units</th>
+                                    <th>HPW</th>
+                                    <th>Faculty</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td></td> <!-- Course Code -->
+                                    <td></td> <!-- Course Name -->
+                                    <td></td> <!-- Block -->
+                                    <td></td> <!-- Type -->
+                                    <td></td> <!-- Units -->
+                                    <td></td> <!-- hours per week -->
+                                    <td></td> <!-- Faculty Name -->
+                                    <td>
+                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>2nd Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Block</th>
+                                    <th>Type</th>
+                                    <th>Units</th>
+                                    <th>HPW</th>
+                                    <th>Faculty</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <tr>
+                                    <td></td> <!-- Course Code -->
+                                    <td></td> <!-- Course Name -->
+                                    <td></td> <!-- Block -->
+                                    <td></td> <!-- Type -->
+                                    <td></td> <!-- Units -->
+                                    <td></td> <!-- hours per week -->
+                                    <td></td> <!-- Faculty Name -->
+                                    <td>
+                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>3rd Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Block</th>
+                                    <th>Type</th>
+                                    <th>Units</th>
+                                    <th>HPW</th>
+                                    <th>Faculty</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td></td> <!-- Course Code -->
+                                    <td></td> <!-- Course Name -->
+                                    <td></td> <!-- Block -->
+                                    <td></td> <!-- Type -->
+                                    <td></td> <!-- Units -->
+                                    <td></td> <!-- hours per week -->
+                                    <td></td> <!-- Faculty Name -->
+                                    <td>
+                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>4th Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Block</th>
+                                    <th>Type</th>
+                                    <th>Units</th>
+                                    <th>HPW</th>
+                                    <th>Faculty</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <tr>
+                                    <td></td> <!-- Course Code -->
+                                    <td></td> <!-- Course Name -->
+                                    <td></td> <!-- Block -->
+                                    <td></td> <!-- Type -->
+                                    <td></td> <!-- Units -->
+                                    <td></td> <!-- hours per week -->
+                                    <td></td> <!-- Faculty Name -->
+                                    <td>
+                                        <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
+                                        <button><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="popup">
+        <div class="close-btn">&times;</div>
+        <div class="form">
+            <form method="POST" action="">
+                <h2>Add Course</h2>
+                <div class="form-element">
+                    <label for="room_number">Room No</label>
+                    <input type="text" id="room_number" name="room_number" placeholder="Course Name" required>
+                </div>
+                <div class="form-element">
+                    <label for="capacity">Capacity</label>
+                    <input type="number" id="capacity" name="capacity" placeholder="Capacity" required>
+                </div>
+                <div class="form-element">
+                    <label for="type">Room Type</label>
+                    <div class="select-box">
+                    <select id="course_type" name="course_type">
+                        <option value="">-- Please select --</option>
+                        <option value="lecture">Lecture</option>
+                        <option value="lecture">Networking</option>
+                        <option value="comp_lab">Comp Laboratory</option>
+                        <option value="eng_lab">Engineering Laboratory</option>
+                    </select>
+                </div>
+                </div>
+
+                <div class="form-element">
+                    <label for="floor_level">Floor Level</label>
+                    <div class="select-box">
+                    <select id="floor_level" name="floor_level">
+                        <option value="">-- Please select --</option>
+                        <option value="1st_floor">1st floor</option>
+                        <option value="2nd_floor">2nd floor</option>
+                        <option value="3rd_floor">3rd floor</option>
+                        <option value="4th_floor">4th floor</option>
+                    </select>
+                    </div>
+                </div>
+
+                <div class="form-element">
+                    <label for="faculty">Faculty</label>
+                    <div class="select-box">
+                    <select id="faculty" name="faculty">
+                        <option value="">-- Please select --</option>
+                        {% for faculty in faculty_choices %}
+                        <option value="{{ faculty[0] }}">{{ faculty[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                </div>
+                 <!-- Automatically includes the CSRF token -->
+                 <div class="form-element">
+                <button type="submit">Add Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
+</span>
+<script src="{{ url_for('static', filename='js/scripts/registrar/registrar.js') }}"></script>
+{% endblock %}
+
+</body>

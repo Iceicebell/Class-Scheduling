@@ -15,7 +15,10 @@
                             {{ form.program_name.label(class_="form-label") }}
                             {{ form.program_name(class_="form-control", placeholder="Enter program name") }}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Program</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary w-100">Update Program</button>
+                            <a href="{{ url_for('my_blueprint.program') }}" class="btn btn-secondary w-100">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>

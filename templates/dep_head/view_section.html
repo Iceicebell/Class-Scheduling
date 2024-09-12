@@ -1,78 +1,110 @@
 <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/view_section.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/sections2.css') }}">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="{{ url_for('static', filename='js/scripts/dep_head/view_section.js') }}"></script>
 {% extends "dep_head/program.html" %}
 
 {% block content %}
-<div class="table">
-    <form id="add-courses-form">
-        <div class="table_header">
-            <p>Add Course</p>
-            <div>
-                <input type="text" id="block-search" placeholder="Search by Block">
-                <button type="button" id="search-button">Search</button>
+<span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button id="course-timetable-btn" class="tab_btn active" type="button">Section Courses</button>
+            <button id="faculties-timetable-btn" class="tab_btn" type="button">Unavailable Times</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                <div class="table">
+                    <form id="add-courses-form">
+                        <div class="table_header">
+                            <p>Add Course</p>
+                            <div>
+                                <input type="text" id="block-search" placeholder="Search by Block" required>
+                                <button type="button" id="search-button" class="btn-search">Search</button>
+                            </div>
+                            <button type="button" name="submit" id="submit" class="btn-add-to-section">Add Courses</button>
+                        </div>
+                        
+                        <input type="hidden" id="section-id" name="section-id" value="{{ section.section_id }}">
+                        <div class="table_section">
+                            <table id="course-table">
+                                <thead>
+                                    <tr>
+                                        <th>Check</th>
+                                        <th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Block</th>
+                                        <th>Credits</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="course-tbody">
+                                    {% for course in all_courses %}
+                                        <tr>
+                                            <td><input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}"></td>
+                                            <td>{{ course[1] }}</td>
+                                            <td>{{ course[2] }}</td>
+                                            <td>{{ course[3] }}</td>
+                                            <td>{{ course[4] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
                 </div>
-            <button type="button" name="submit" id="submit" class="btn-add-to-section">Add Courses</button>
-            
-        </div>
-        
-        <input type="hidden" id="section-id" name="section-id" value="{{ section.section_id }}">
-        <div class="table_section">
-            <table id="course-table">
-                <thead>
-                    <tr>
-                        <th>Check</th>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Block</th>
-                    </tr>
-                </thead>
-                <tbody id="course-tbody">
-                    {% for course in all_courses %}
-                        <tr>
-                            <td><input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}"></td>
-                            <td>{{ course[1] }}</td>
-                            <td>{{ course[2] }}</td>
-                            <td>{{ course[3] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </form>
-</div>
-    <div class="table">
-        <div class="table_header">
-            <p>Selected Courses</p>
-        </div>
-        
-        <div class="table_section">
-            <table id="selected-table">
-                <thead>
-                    <tr>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for course in selected_courses %}
-                        <tr>
-                            <td>{{ course[1] }}</td>
-                            <td>{{ course[2] }}</td>
-                            <td></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+                <div class="table">
+                    <div class="table_header">
+                        <p>Selected Courses</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table id="selected-table">
+                            <thead>
+                                <tr>
+                                    <th>Course Code</th>
+                                    <th>Course Name</th>
+                                    <th>Course Block</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in selected_courses %}
+                                    <tr>
+                                        <td>{{ course[1] }}</td>
+                                        <td>{{ course[2] }}</td>
+                                        <td>{{ course[3] }}</td>
+                                        <td>
+                                            <button class="btn-remove" data-course-id="{{ course[0] }}">Remove</button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                
+            </div>
         </div>
     </div>
-    
-    <script>
-        $(document).ready(function() {
-            $('#submit').click(function(e) {
-                e.preventDefault(); // Prevent default form submission
+</span>
+
+<div id="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#submit').click(function(e) {
+            e.preventDefault();
+            if (confirm("Are you sure you want to add these courses?")) {
+                $('#loading-overlay').show();
                 var insert = [];
                 $('.get_value').each(function() {
                     if ($(this).is(":checked")) {
@@ -80,7 +112,7 @@
                     }
                 });
                 
-                var sectionId = $('#section-id').val(); // Assuming you have a hidden input with the section ID
+                var sectionId = $('#section-id').val();
                 var data = {
                     section_id: sectionId,
                     course_ids: insert
@@ -97,13 +129,17 @@
                     },
                     error: function(xhr, status, error) {   
                         alert('Error adding courses: ' + error);
+                    },
+                    complete: function() {
+                        $('#loading-overlay').hide();
                     }
                 });
-            });
+            }
+        });
 
-            // Search functionality
-            $('#search-button').click(function() {
-                var searchValue = $('#block-search').val().toLowerCase();
+        $('#search-button').click(function() {
+            var searchValue = $('#block-search').val().trim().toLowerCase();
+            if (searchValue) {
                 $('#course-tbody tr').each(function() {
                     var block = $(this).find('td:nth-child(4)').text().toLowerCase();
                     if (block.includes(searchValue)) {
@@ -112,14 +148,25 @@
                         $(this).hide();
                     }
                 });
-            });
-
-            // Clear search when input is empty
-            $('#block-search').on('input', function() {
-                if ($(this).val() === '') {
-                    $('#course-tbody tr').show();
-                }
-            });
+            } else {
+                $('#course-tbody tr').show();
+            }
         });
-    </script>
+
+        $('#block-search').on('input', function() {
+            var searchValue = $(this).val().trim().toLowerCase();
+            if (!searchValue) {
+                $('#course-tbody tr').show();
+            }
+        });
+
+        $('.btn-remove').click(function() {
+            var courseId = $(this).data('course-id');
+            if (confirm("Are you sure you want to remove this course?")) {
+                // Add AJAX call to remove the course from the selected courses
+                // Reload the page or update the selected courses table after successful removal
+            }
+        });
+    });
+</script>
 {% endblock %}

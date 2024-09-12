@@ -50,7 +50,7 @@ class Solution:
         # print(f"Original duration_decimal for course {course_id}: {duration_decimal}")  # Debugging line
         
         # Fetch the actual units from the database to decide on splitting
-        units = self.get_course_units(cursor, course_id)
+        hours_per_week = self.get_course_hours_per_week(cursor, course_id)
         # print(f"Units for course {course_id}: {units}")  # Debugging line
         
         # Adjust max_duration to respect the lunch break without unnecessarily reducing course duration
@@ -68,14 +68,14 @@ class Solution:
             max_duration = min(20 - start_hour, duration_decimal)  # Ensure the course ends before 20:00 if it starts after 12:00
 
         # Check if the course has 2 or more units and needs to be split into two meetings
-        if units >= 2:
+        if hours_per_week >= 2:
             # Determine the days to split the course based on the initial day
             if day in ['Monday', 'Tuesday', 'Thursday']:
                 days = [day, self.get_pair_day(day)]
             else:
                 # If the day is not one of the starting days, choose a pair that fits within the week
                 days = [day, self.get_pair_day(day)]
-            split_duration_decimal = units / Decimal(2)  # Use Decimal for precise division
+            split_duration_decimal = hours_per_week / Decimal(2)  # Use Decimal for precise division
             # print(f"Split duration_decimal for course {course_id}: {split_duration_decimal}")  # Debugging line
         else:
             days = [day]  # Course with less than 2 units, schedule on any day without splitting
@@ -191,13 +191,19 @@ class Solution:
         unit_match_score = 0
         for section_assignments in self.schedule.values():
             for course_id, _, _, duration, _, _ in section_assignments:  # Assuming the sixth element is not used
-                expected_units = self.get_course_units(cursor, course_id)
+                expected_hours = self.get_course_hours_per_week(cursor, course_id)
                 scheduled_hours = sum(dur for _, _, _, dur, _, _ in section_assignments if dur == duration)
-                unit_match_score -= abs(expected_units - scheduled_hours)
+                unit_match_score -= abs(expected_hours - scheduled_hours)
         return unit_match_score
 
-    def get_course_units(self, cursor, course_id):
-        query = "SELECT units FROM courses WHERE course_id = %s"
+    # def get_course_units(self, cursor, course_id):
+    #     query = "SELECT units FROM courses WHERE course_id = %s"
+    #     cursor.execute(query, (course_id,))
+    #     result = cursor.fetchone()
+    #     return result[0] if result else 0
+
+    def get_course_hours_per_week(self, cursor, course_id):
+        query = "SELECT hours_per_week FROM courses WHERE course_id = %s"
         cursor.execute(query, (course_id,))
         result = cursor.fetchone()
         return result[0] if result else 0
@@ -226,11 +232,11 @@ class Solution:
                         end_time1 = start_hour1 + duration1
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1:  # Overlap check
-                            conflicts_penalty += 200  # Simple penalty, adjust based on severity
+                            conflicts_penalty += 1000  # Simple penalty, adjust based on severity
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         if faculty_id1 == faculty_id2:  # Faculty conflict
-                            conflicts_penalty += 200  # Adjust penalty as needed
+                            conflicts_penalty += 1000  # Adjust penalty as needed
 
         # Penalty for disregarding lunch breaks
         for section_id, assignments in self.schedule.items():
@@ -247,17 +253,17 @@ class Solution:
                     course_code_block_groups[key] = []
                 course_code_block_groups[key].append((course_id, day, start_hour, duration))
                 if len(course_code_block_groups[key]) > 1:  # More than one instance of the same course-code-block grouping
-                    integrity_reward += 100  # Reward for keeping them together
+                    integrity_reward += 500  # Reward for keeping them together
 
         # Reward for efficient utilization (simple example: reward for filling morning and afternoon slots)
         for section_id, assignments in self.schedule.items():
-            morning_slots_filled = sum(10 for _, day, start_hour, _, _, _ in assignments if start_hour < 12)
-            afternoon_slots_filled = sum(10 for _, day, start_hour, _, _, _ in assignments if start_hour >= 13)
+            morning_slots_filled = sum(5 for _, day, start_hour, _, _, _ in assignments if start_hour < 12)
+            afternoon_slots_filled = sum(5 for _, day, start_hour, _, _, _ in assignments if start_hour >= 13)
             efficiency_reward += min(morning_slots_filled, afternoon_slots_filled)  # Encourage balance
 
         # Calculate total fitness score
         self.fitness_score = integrity_reward + efficiency_reward - conflicts_penalty - utilization_penalty
-        # print("Fitness Score: ",self.fitness_score)
+        print("Fitness Score: ",self.fitness_score)
         return self.fitness_score
 
 
@@ -443,53 +449,92 @@ def generate_initial_solution():
     db = mysql.connector.connect(**db_config)
     cursor = db.cursor()
     try:
+        print("Starting generate_initial_solution()")
+        
         # Fetch sections owned by the current user
+        print("Executing SQL query...")
         cursor.execute("""
-            SELECT s.section_id, c.course_id, c.units, c.course_code, c.course_block
+            SELECT s.section_id, c.course_id, c.hours_per_week, c.course_code, c.course_block
             FROM sections s
             JOIN section_courses sc ON s.section_id = sc.section_id
             JOIN courses c ON sc.course_id = c.course_id
             WHERE s.user_id = %s;
         """, (session.get('user_id'),))
+        
+        print("Fetching results...")
         sections_data = cursor.fetchall()
+        
+        print(f"sections_data length: {len(sections_data)}")
+        print(f"First row of sections_data: {sections_data[0]}")
+        print(f"Number of columns in first row: {len(sections_data[0])}")
 
         # Fetch unavailable times for each section to mark them in the schedule
+        print("Processing unavailable times...")
         for section_id, _, _, _, _ in sections_data:
-            solution.fetch_unavailable_times(cursor, section_id)
+            try:
+                solution.fetch_unavailable_times(cursor, section_id)
+            except Exception as e:
+                print(f"Error fetching unavailable times for section {section_id}: {str(e)}")
 
+        print("Grouping courses...")
         grouped_courses = {}
-        for section_id, course_id, units, course_code, course_block in sections_data:
+        for section_id, course_id, hours_per_week, course_code, course_block in sections_data:
             key = (course_code, course_block)
             if key not in grouped_courses:
                 grouped_courses[key] = []
-            grouped_courses[key].append((section_id, course_id, units))
+            grouped_courses[key].append((section_id, course_id, hours_per_week))
 
+        print(f"Number of grouped courses: {len(grouped_courses)}")
+        
+        # Rest of the function remains the same...
+        print("Generating initial solution...")
         for (course_code, course_block), courses in grouped_courses.items():
-            day_options = ['Monday', 'Tuesday', 'Thursday']  # Consider expanding day options based on scheduling constraints
+            print(f"Processing course group: {course_code}/{course_block}")
+            day_options = ['Monday', 'Tuesday', 'Thursday']
             day = random.choice(day_options)
             second_day = solution.get_pair_day(day)
+            
             morning_period = range(7, 12)
             afternoon_period = range(13, 20)
             combined_periods = list(morning_period) + list(afternoon_period)
             start_hour = random.choice(combined_periods)
-
-            for section_id, course_id, units in courses:
-                units_decimal = Decimal(units)
-                # logging.debug(f"Processing course {course_id} with units {units_decimal}")
-                if units_decimal > Decimal(2):
-                    split_duration_decimal = units_decimal / Decimal(2)
-                    # logging.debug(f"Split duration_decimal for course {course_id}: {split_duration_decimal}")
-                    solution.add_course_assignment(section_id, course_id, day, start_hour, split_duration_decimal, course_code, course_block, cursor)
-                    solution.add_course_assignment(section_id, course_id, second_day, start_hour, split_duration_decimal, course_code, course_block, cursor)
-                else:
-                    solution.add_course_assignment(section_id, course_id, day, start_hour, units_decimal, course_code, course_block, cursor)
+            
+            print(f"Day: {day}, Second Day: {second_day}, Start Hour: {start_hour}")
+            
+            for section_id, course_id, hours_per_week in courses:
+                print(f"Processing course: {course_id} ({course_code}/{course_block})")
+                
+                try:
+                    print(f"Course details: Section ID: {section_id}, Course ID: {course_id}, Hours per week: {hours_per_week}")
+                    
+                    hours_per_week_decimal = Decimal(hours_per_week)
+                    print(f"Hours per week decimal: {hours_per_week_decimal}")
+                    
+                    if hours_per_week_decimal > Decimal(2):
+                        split_duration_decimal = hours_per_week_decimal / Decimal(2)
+                        print(f"Split duration: {split_duration_decimal}")
+                        
+                        solution.add_course_assignment(section_id, course_id, day, start_hour, split_duration_decimal, course_code, course_block, cursor)
+                        print(f"Added first part of split course")
+                        
+                        solution.add_course_assignment(section_id, course_id, second_day, start_hour, split_duration_decimal, course_code, course_block, cursor)
+                        print(f"Added second part of split course")
+                    else:
+                        solution.add_course_assignment(section_id, course_id, day, start_hour, hours_per_week_decimal, course_code, course_block, cursor)
+                        print(f"Added non-split course")
+                    
+                except Exception as e:
+                    print(f"Error processing course {course_id}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+            
+            print(f"Finished processing course group: {course_code}/{course_block}")
 
         logging.info("Initial solution generated.")
     finally:
         cursor.close()
         db.close()
     return solution
-
 
 
 def select_parents(population, tournament_size=3):
@@ -558,7 +603,7 @@ def generate_faculty_timetable(cursor, current_user_id):
     faculty_timetable = {}
     
     # Fetch faculty names for the current user's sections
-    cursor.execute("SELECT faculty_id, first_name, last_name FROM faculty WHERE faculty_id IN (SELECT faculty_id FROM courses WHERE course_id IN (SELECT course_id FROM section_courses WHERE section_id IN (SELECT section_id FROM sections WHERE user_id = %s)))", (current_user_id,))
+    cursor.execute("SELECT faculty_id, first_name, last_name FROM faculties WHERE faculty_id IN (SELECT faculty_id FROM courses WHERE course_id IN (SELECT course_id FROM section_courses WHERE section_id IN (SELECT section_id FROM sections WHERE user_id = %s)))", (current_user_id,))
     faculty_data = cursor.fetchall()
     faculty_names = {faculty_id: f"{first_name} {last_name}" for faculty_id, first_name, last_name in faculty_data}
     

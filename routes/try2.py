@@ -1,6 +1,6 @@
 import random
 import mysql.connector
-from geneticAlgorithm2 import Solution, generate_initial_solution, run_genetic_algorithm
+from roomAlgorithm import Solution, generate_initial_solution, run_genetic_algorithm
 from flask import current_app
 import mysql.connector
 

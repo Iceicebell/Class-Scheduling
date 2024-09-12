@@ -22,7 +22,10 @@
                             {{ form.year_level.label(class_="form-label") }}
                             {{ form.year_level(class_="form-select") }}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Section</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary w-100">Update Section</button>
+                            <a href="{{ url_for('my_blueprint.section') }}" class="btn btn-secondary w-100">Cancel</a>
+                        </div>
                     </form>
                 </div>
             </div>

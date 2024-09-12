@@ -43,4 +43,3 @@ closeAdd.addEventListener("click", function(){
     document.querySelector(".popup").classList.remove("active");
 });
 
-// ===================OPTIONS================

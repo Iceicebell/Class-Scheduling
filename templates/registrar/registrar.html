@@ -8,12 +8,13 @@
         <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_table.css') }}">
     </head>
 
     <body>
-        <div class="container">
+        <div class="container1">
             <header>
-                <nav class="navbar">
+                <nav class="navbar1">
                     <div class="nav-section nav-left">
                         <button class="nav-button menu-button">
                             <i class='bx bx-menu'></i>
@@ -53,7 +54,7 @@
 
                     <div class="link-container">
                         <div class="link-section">
-                            <a href="" class="link-item">
+                            <a href="{{ url_for('my_blueprint.room') }}" class="link-item">
                                 <i class='bx bxs-home'></i>Rooms
                             </a>
                             <a href="" class="link-item">
@@ -77,6 +78,9 @@
                         </div>
                     </div>
                 </aside>
+                <div class="content-wrapper" id="main-content"></div>
+                    {% block content %}{% endblock %}
+                </div>
             </main>
         </div>
 
