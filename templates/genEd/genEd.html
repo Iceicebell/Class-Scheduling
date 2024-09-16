@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width = device-width, initial-scale=1.0">
+        <title>Course and Teachers</title>
+
+        <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd.css') }}">
+    </head>
+
+    <body>
+        <div class="container1">
+            <header>
+                <nav class="navbar1">
+                    <div class="nav-section nav-left">
+                        <button class="nav-button menu-button">
+                            <i class='bx bx-menu'></i>
+                        </button>
+                        <a href="#" class="nav-logo">
+                            <img src="{{ url_for('static', filename='img/scheduler_logo.png') }}" alt="" class="logo-image">
+                            <h2 class="logo-text">Datetator</h2>
+                        </a>
+                    </div>
+
+                    <div class="nav-section nav-center">
+                        <h3>{{session.get('department')}} Department</h3>
+                    </div>
+
+                    <div class="nav-section nav-right">
+                        <img src="{{ url_for('static', filename='img/dwcl.png') }}" alt="" class="class-image">
+                    </div>
+                </nav>
+            </header>
+
+            <main class="main-layout">
+
+                <div class="screen-overlay"></div>
+                <!------ SIDEBAR ---------> 
+                <aside class="sidebar">
+
+                    <div class="nav-section nav-left">
+                        <button class="nav-button menu-button">
+                            <i class='bx bx-menu'></i>
+                        </button>
+                        <a href="#" class="nav-logo">
+                            <img src="{{ url_for('static', filename='img/dwcl.png') }}" alt="" class="logo-image">
+                            <h2 class="logo-text">Datetator</h2>
+                        </a>
+                    </div>
+
+                    <div class="link-container1">
+                        <div class="link-section ">
+                            <a href="{{ url_for('my_blueprint.genEd_courses') }}" class="link-item {% if current_endpoint == 'my_blueprint.genEd_courses' %}active{% endif %}">
+                                <i class="active bx bxs-home"></i>Courses
+                            </a>
+                        </div>
+                        <div class="link-section">
+                            <a href="{{ url_for('my_blueprint.faculties') }}" class="link-item {% if current_endpoint == 'my_blueprint.faculties' %}active{% endif %}">
+                                <i class="bx bxs-user-plus"></i>Faculties
+                            </a>
+                        </div>
+                        <div class="link-section">
+                            <a href="{{ url_for('minorAlgorithm.generate') }}" class="link-item {% if current_endpoint == 'minorAlgorithm.generate' %}active{% endif %}">
+                                <i class="bx bx-slider-alt"></i>Generate
+                            </a>
+                        </div>
+                        <div class="link-section">
+                            <a href="{{ url_for('my_blueprint.create') }}" class="link-item {% if current_endpoint == 'my_blueprint.create' %}active{% endif %}">
+                                <i class="bx bxs-dashboard"></i>Create Schedule
+                            </a>
+                    </div>
+
+                        <div class="section-separator"></div>
+
+                        <div class="link-section">
+                            <a href="" class="link-item">
+                                <i class='bx bxs-cog' ></i>Settings
+                            </a>
+                            <a href="/signout" class="link-item">
+                                <i class='bx bxs-log-out'></i>Logout
+                            </a>
+                            
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="content-wrapper" id="main-content">
+                    {% block content %}{% endblock %}
+                </div>
+                
+            </main>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/scripts/genEd/genEd.js') }}"></script>
+    </body>
+    </html>

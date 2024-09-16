@@ -4,8 +4,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/faculties.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/faculty_table.css') }}">
 </head>
-{% extends "dep_head/dep_head.html" %}
-
+{% if session.user_role == 'dept-head' %}
+    {% extends "dep_head/dep_head.html" %}
+{% elif session.user_role == 'gen-ed' %}
+    {% extends "genEd/genEd.html" %}
+    {% endif %}
 {% block content %}
 <div class="table">
     <div class="table_header">

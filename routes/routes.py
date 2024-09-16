@@ -33,6 +33,8 @@ def home():
                 return redirect(url_for('my_blueprint.admin'))  # Assuming you have a route named 'admin_dashboard' for admins
         elif user_role == 'dept-head':  # Assuming 'dept-head' is the role for department heads
                 return redirect(url_for('my_blueprint.program'))  # Assuming 'program' is the route for department heads
+        elif user_role == 'gen-ed': 
+                return redirect(url_for('my_blueprint.gened'))  # Assuming 'program' is the route for department heads
         else:
                 return redirect(url_for('signin'))  # Redirect back to signin if role is unknown
 
@@ -78,7 +80,7 @@ def faculties():
         return redirect(url_for('my_blueprint.new_user'))
     if 'user_id' not in session:
         return redirect(url_for('signin'))
-    if session.get('user_role') != 'dept-head':
+    if session.get('user_role') not in ['dept-head', 'gen-ed']:
         abort(403)
 
     current_user_id = session['user_id']
@@ -1183,26 +1185,200 @@ def add_program():
 
 
 
-
-
-# ========================================================Admin======================================================
+# ========================================================Admin1======================================================
 
 
 
 @bp.route('/admin')
 def admin():
-    if session.get('isVerified') ==False:
+    if session.get('isVerified') == False:
         return redirect(url_for('my_blueprint.new_user'))
     if 'user_id' not in session:
         return redirect(url_for('signin'))
     if session.get('user_role') != 'admin':
         abort(403)
-    return render_template('admin/admin.html')
+
+    cur = g.mysql.connection.cursor()
+
+    try:
+        cur.execute("SELECT user_id, username, email, role, department, is_verified FROM users ORDER BY user_id ASC")
+        users = cur.fetchall()
+        logger.debug(f"Fetched users: {users}")  # Log fetched data
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+    finally:
+        cur.close()
+    
+    return render_template('admin/admin.html', users=users, current_endpoint=request.endpoint)
+
+
+
+# ========================================================gened1======================================================
+@bp.route('/gened', methods=['GET', 'POST'])
+def gened():
+    if session.get('isVerified') == False:
+        return redirect(url_for('my_blueprint.new_user'))
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'gen-ed':
+        abort(403)
+    return redirect(url_for('my_blueprint.genEd_courses'))
+
+
+@bp.route('/gened_courses', methods=['GET', 'POST'])
+def genEd_courses():
+    form = AddGenEdCourseForm()
+    if session.get('isVerified') == False:
+        return redirect(url_for('my_blueprint.new_user'))
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'gen-ed':
+        abort(403)
+
+    # Fetch courses from gened_courses table
+    try:
+        cur = g.mysql.connection.cursor()
+        query_template = """
+            SELECT gc.course_id, gc.course_code, gc.course_name, gc.course_block, gc.units, gc.hours_per_week, 
+                   CONCAT(f.faculty_id, ' ', f.first_name, ' ', f.last_name) AS faculty_name
+            FROM gened_courses gc
+            LEFT JOIN faculties f ON gc.faculty_id = f.faculty_id
+            ORDER BY gc.course_code ASC
+        """
+        cur.execute(query_template)
+        courses = cur.fetchall()
+        cur.close()
+
+        # Convert tuples to list of dictionaries for the template
+        course_list = courses
+    except Exception as e:
+        print(e)
+        course_list = []  # Fallback to empty list on error
+
+    # Fetch faculty choices from the current user's department
+    try:
+        cur = g.mysql.connection.cursor()
+        current_user_id = session.get('user_id')
+        
+        # First, fetch the department of the current user
+        cur.execute("SELECT department FROM users WHERE user_id = %s", (current_user_id,))
+        current_user_department = cur.fetchone()
+        
+        if current_user_department:
+            department = current_user_department[0]
+            # Now, fetch faculty members from the same department
+            cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculties WHERE department = %s", (department,))
+            faculties = cur.fetchall()
+            cur.close()
+
+            # Convert tuples to list of (id, full_name) pairs for the SelectField choices
+            faculty_choices = [(str(faculty[0]), faculty[1]) for faculty in faculties]
+            logger.debug(f"Faculty choices: {faculty_choices}")
+        else:
+            faculty_choices = []
+            logger.warning("User's department not found")
+    except Exception as e:
+        logger.error(f"Error fetching faculty choices: {e}")
+        faculty_choices = []
+
+    # Set the faculty choices for the form
+    form.faculty.choices = faculty_choices
+
+    return render_template('genEd/genEd_courses.html', form=form, course=course_list, faculty_choices=faculty_choices, current_endpoint=request.endpoint)
+
+
+
+class AddGenEdCourseForm(FlaskForm):
+    course_name = StringField('Course Name', validators=[DataRequired()])
+    course_code = StringField('Course Code', validators=[DataRequired()])
+    units = StringField('Units', validators=[DataRequired()])
+    hours_per_week = StringField('Hours Per Week', validators=[DataRequired()])
+    course_block = StringField('Block', validators=[DataRequired()])
+    faculty = SelectField('Faculty', choices=[], validators=[Optional()])
+    submit = SubmitField('Add Course')
+
+def add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, course_block, faculty_id=None):
+    cur = g.mysql.connection.cursor()
+    try:
+        # Adjust the INSERT statement according to your courses table structure
+        cur.execute("INSERT INTO gened_courses (course_name, course_code, units, hours_per_week, course_block, faculty_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (course_name, course_code, units, hours_per_week, course_block, faculty_id))
+        g.mysql.connection.commit()
+
+        if faculty_id:
+            cur.execute("""
+                UPDATE faculties 
+                SET faculty_used_units = faculty_used_units + %s 
+                WHERE faculty_id = %s
+            """, (units, faculty_id))
+            g.mysql.connection.commit()
+
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        # Handle exception, maybe rollback transaction here
+    finally:
+        cur.close()
+
+@bp.route('/add_gened_course', methods=['GET', 'POST'])
+def add_gened_course():
+    # Initialize the form
+    form = AddGenEdCourseForm(request.form)
+
+    if session.get('isVerified') == False:
+        return redirect(url_for('my_blueprint.new_user'))
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'gen-ed':
+        abort(403)
+
+    # Fetch faculty choices
+    try:
+        cur = g.mysql.connection.cursor()
+        cur.execute("SELECT faculty_id, CONCAT(first_name, ' ', last_name) AS full_name FROM faculties")
+        faculties = cur.fetchall()
+        cur.close()
+
+        # Convert tuples to list of (id, full_name) pairs for the SelectField choices
+        faculty_choices = [(str(faculty[0]), faculty[1]) for faculty in faculties]
+        logger.debug(f"Faculty choices: {faculty_choices}")
+    except Exception as e:
+        logger.error(f"Error fetching faculty choices: {e}")
+        faculty_choices = []
+
+    # Set the faculty choices for the form
+    form.faculty.choices = faculty_choices
+
+    if form.validate_on_submit():
+        logger.info("Form is valid")
+        course_name = form.course_name.data
+        course_code = form.course_code.data
+        units = form.units.data
+        hours_per_week = form.hours_per_week.data
+        block = form.course_block.data
+        faculty_id = form.faculty.data if form.faculty.data else None
+
+        logger.info(f"Form data: course_name={course_name}, course_code={course_code}, units={units}, hours_per_week={hours_per_week}, block={block}, faculty_id={faculty_id}")
+
+        add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, block, faculty_id=faculty_id)
+        flash('Course added successfully!', 'success')
+        return redirect(url_for('my_blueprint.genEd_courses'))
+    else:
+        logger.error(f"Form validation failed: {form.errors}")
+        flash('Failed to add course.', 'danger')
+
+    # Render the template with the form
+    return render_template('genEd/add_gened_course.html', form=form)
 
 
 
 
-# ==============Registrar==================
+
+
+
+
+
+
+# ==============Registrar1==================
 @bp.route('/registrar')
 def registrar():
     if session.get('isVerified') ==False:

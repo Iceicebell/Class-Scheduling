@@ -66,7 +66,7 @@ class Solution:
         max_duration = min(12 - start_hour, duration_decimal) if start_hour < 12 else duration_decimal  # Ensure the course ends before 12:00 if it starts before
         if start_hour >= 12:
             max_duration = min(20 - start_hour, duration_decimal)  # Ensure the course ends before 20:00 if it starts after 12:00
-
+        
         # Check if the course has 2 or more units and needs to be split into two meetings
         if hours_per_week >= 2:
             # Determine the days to split the course based on the initial day
@@ -233,9 +233,12 @@ class Solution:
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1:  # Overlap check
                             conflicts_penalty += 1000  # Simple penalty, adjust based on severity
+                        
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
-                        if faculty_id1 == faculty_id2:  # Faculty conflict
+                        
+                        # Only penalize for faculty conflict if course_code and block are different
+                        if faculty_id1 == faculty_id2 and (course_code1 != course_code2 or course_block1 != course_block2):
                             conflicts_penalty += 1000  # Adjust penalty as needed
 
         # Penalty for disregarding lunch breaks
@@ -253,7 +256,7 @@ class Solution:
                     course_code_block_groups[key] = []
                 course_code_block_groups[key].append((course_id, day, start_hour, duration))
                 if len(course_code_block_groups[key]) > 1:  # More than one instance of the same course-code-block grouping
-                    integrity_reward += 500  # Reward for keeping them together
+                    integrity_reward += 2000  # Reward for keeping them together
 
         # Reward for efficient utilization (simple example: reward for filling morning and afternoon slots)
         for section_id, assignments in self.schedule.items():
