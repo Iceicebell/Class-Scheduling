@@ -266,7 +266,7 @@ class Solution:
 
         # Calculate total fitness score
         self.fitness_score = integrity_reward + efficiency_reward - conflicts_penalty - utilization_penalty
-        print("Fitness Score: ",self.fitness_score)
+        # print("Fitness Score: ",self.fitness_score)
         return self.fitness_score
 
 

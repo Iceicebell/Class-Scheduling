@@ -4,17 +4,8 @@
 
 {% block content %}
 <div class="table_header1">
-    <form id="generateForm" method="POST">
-        {{ form.hidden_tag() }}
-        <label for="population_size" class="text">Population</label>
-        <input type="number" placeholder="Type here..." name="population_size" class="input" value="{{ form.population_size.data }}">
-        
-        <label for="max_generations" class="text">Generations</label>
-        <input type="number" placeholder="Type here..." name="max_generations" class="input" value="{{ form.max_generations.data }}">
-        <button id="generate-button" class="generate" type="submit">Generate</button>
-    </form>
     <div class="filter-container">
-        <form method="GET" action="{{ url_for('RoomAlgorithm.room_schedule') }}">
+        <form method="GET" action="{{ url_for('my_blueprint.create_room_schedule') }}">
             <label for="floor_level">Select Floor Level:</label>
             <select id="floor_level" name="floor_level" onchange="this.form.submit()">
                 <option value="1" {% if floor_level == 1 %}selected{% endif %}>1st Floor</option>
@@ -24,6 +15,10 @@
             </select>
         </form>
     </div>
+    <form method="POST" action="{{ url_for('my_blueprint.apply_schedule') }}">
+        <button type="submit" class="add_new">Apply the Schedule</button>
+    </form>
+    <button id="import" class="add_new" onclick="document.getElementById('file-input').click();">Export</button>
 </div>
 
 {% for classroom in classrooms %}
@@ -46,7 +41,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for allocation in room_allocations[classroom.room_id]  %}
+                {% for allocation in room_allocations[classroom.room_id] %}
                 <tr>
                     <td>{{ allocation.course_code }}/{{ allocation.block }}/{{ allocation.department }}</td>
                     <td>{% if allocation.day == 'Monday' %}{{ allocation.start_time }} - {{ allocation.end_time }}{% endif %}</td>

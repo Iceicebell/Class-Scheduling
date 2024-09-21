@@ -20,9 +20,9 @@
     </head>
 
     <body>
-        <div class="container">
+        <div class="container1">
             <header>
-                <nav class="navbar">
+                <nav class="navbar1">
                     <div class="nav-section nav-left">
                         <button class="nav-button menu-button">
                             <i class='bx bx-menu'></i>
@@ -62,7 +62,7 @@
 
                     <div class="link-container">
                         <div class="link-section">
-                            <a href="" class="link-item">
+                            <a href="{{ url_for('my_blueprint.admin') }}" class="link-item">
                                 <i class='bx bxs-user-plus'></i>Accounts
                             </a>
                         </div>
@@ -87,53 +87,7 @@
                 </aside>
 
                 <div class="content-wrapper">
-                 <div class="table">
-                    <div class="table_header">
-                        <p>Accounts</p>
-                        <div>
-                            <button id="show-add" class="add_new">+Add New</button>
-                        </div>
-                    </div>
-                    
-                    <div class="table-section">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Id</th>
-                                    <th>Email</th>
-                                    <th>Username</th>
-                                    <th>Role</th>
-                                    <th>Department</th>
-                                    <th>Verified</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users %}
-                                <tr>
-                                    <td>{{ user[0] }}</td>
-                                    <td>{{ user[1] }}</td>
-                                    <td>{{ user[2] }}</td>
-                                    <td>{{ user[3] }}</td>
-                                    <td>{{ user[4] }}</td>
-                                    <td class="{% if user[5] == 0 %}not-verified{% endif %}">
-                                        {% if user[5] == 1 %}
-                                            Verified
-                                        {% else %}
-                                            DISABLED
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href=""><i class='bx bxs-edit-alt'></i></a>
-                                        <a href="" onclick="return confirm('Are you sure?')"><i class='bx bxs-trash-alt'></i></a>
-                                        <a href=""><i class='bx bx-minus-circle'></i></a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    {% block content %}{% endblock %}
                 </div>
 
             </main>
@@ -141,38 +95,5 @@
 
         <script src="{{ url_for('static', filename='js/scripts/admin/admin.js') }}"></script>
 
-        <script>
-            function deleteUser(userId) {
-                if (confirm("Are you sure you want to delete this user?")) {
-                    fetch('/delete-user/' + userId, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ form.csrf_token }}'
-                        },
-                        body: JSON.stringify({user_id: userId})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while deleting the user.');
-                    });
-                }
-            }
-        
-            function editUser(userId) {
-                // This function can be used to open a modal or redirect to an edit page
-                // For now, it just logs the user ID to the console
-                console.log('Editing user with ID:', userId);
-                // You can implement the actual edit functionality here
-            }
-        </script>
     </body>
     </html>

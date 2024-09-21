@@ -58,4 +58,18 @@
     transition: all .3s ease-in-out;
   }
 
-  
+  .select-box select{
+    width: 100%;
+    margin-top: 5px;
+    display: block;
+    padding: 10px;
+    outline: none;
+    border: 1px solid var(--background);
+    border-radius: 5px;
+    color: var(--background);
+    
+}
+.select-box option{
+    background: rgb(59, 112, 151, 0.2);
+    color: var(--background);
+}
