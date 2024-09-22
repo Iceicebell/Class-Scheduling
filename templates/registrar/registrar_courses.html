@@ -8,7 +8,7 @@
     <div class="table_header">
         <p>Accounts</p>
         <div>
-            <select id="department-filter" required>
+            <select class="department-filter" required>
                 <option value="">All Departments</option>
                 {% for department in departments %}
                 <option value="{{ department[0] }}" {% if department[0] == department_filter %}selected{% endif %}>{{ department[0] }}</option>

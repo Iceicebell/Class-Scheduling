@@ -38,12 +38,16 @@
     background-color:rgb(59, 112, 151);
     font-weight: 600;
     margin-bottom: 20px;
+    color: #a2e2f8;
 }
-
 .table_header p{
     color: #a2e2f8;
 }
-
+.input{
+    border: none;
+    height: 30px;
+    outline: none;
+}
 
 td button:nth-child(1){
     background-color: blue;

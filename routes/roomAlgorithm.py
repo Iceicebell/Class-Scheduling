@@ -111,6 +111,8 @@ def initialize_population(classrooms, room_courses, population_size, existing_al
                     preferred_rooms.extend([room for room in classrooms if room['floor_level'] == 4])
                 elif course['department'] == 'GENED':
                     preferred_rooms.extend([room for room in classrooms if room['floor_level'] in [1, 2]])
+                elif course['department'] == 'SEAS':
+                    preferred_rooms.extend([room for room in classrooms if room['floor_level'] in [1, 2]])
                 elif course['department'] == 'SBMA':
                     preferred_rooms.extend([room for room in classrooms if room['floor_level'] == 3])
                 else:

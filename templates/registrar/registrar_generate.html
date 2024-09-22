@@ -16,7 +16,7 @@
     <div class="filter-container">
         <form method="GET" action="{{ url_for('RoomAlgorithm.room_schedule') }}">
             <label for="floor_level">Select Floor Level:</label>
-            <select id="floor_level" name="floor_level" onchange="this.form.submit()">
+            <select class="department-filter" id="floor_level" name="floor_level" onchange="this.form.submit()">
                 <option value="1" {% if floor_level == 1 %}selected{% endif %}>1st Floor</option>
                 <option value="2" {% if floor_level == 2 %}selected{% endif %}>2nd Floor</option>
                 <option value="3" {% if floor_level == 3 %}selected{% endif %}>3rd Floor</option>

@@ -1,5 +1,6 @@
 import csv
 from io import StringIO
+import io
 import os
 import re
 import MySQLdb
@@ -10,7 +11,7 @@ import os
 import re
 from typing import Optional
 import bcrypt
-from flask import Blueprint, Response, flash, jsonify, redirect, render_template, render_template_string, request, abort, session, url_for
+from flask import Blueprint, Response, current_app, flash, jsonify, make_response, redirect, render_template, render_template_string, request, abort, session, url_for
 from functools import wraps
 from flask import g
 from flask_mysqldb import MySQL
@@ -92,7 +93,7 @@ def add_faculty_to_db(first_name, last_name, faculty_units, faculty_type,departm
 def faculties():
     form = AddFacultyForm()
     if session.get('isVerified') == False:
-        return redirect(url_for('my_blueprint.new_user'))
+        abort(403)
     if 'user_id' not in session:
         return redirect(url_for('signin'))
     if session.get('user_role') not in ['dept-head', 'gen-ed']:
@@ -199,6 +200,7 @@ class EditFacultyForm(FlaskForm):
 
 @bp.route('/edit-faculty/<int:faculty_id>', methods=['GET', 'POST'])
 def edit_faculty(faculty_id):
+
     logger.debug(f"Received request for faculty_id: {faculty_id}")
     logger.debug(f"Request method: {request.method}")
 
@@ -1351,9 +1353,6 @@ def admin():
     return render_template('admin/user_table.html', users=users, current_endpoint=request.endpoint)
 
 
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 
 class EditUserForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired()])
@@ -1582,6 +1581,7 @@ class AddGenEdCourseForm(FlaskForm):
     units = StringField('Units', validators=[DataRequired()])
     hours_per_week = StringField('Hours Per Week', validators=[DataRequired()])
     course_block = StringField('Block', validators=[DataRequired()])
+    capacity = IntegerField('Capacity', validators=[DataRequired()])
     course_type = SelectField('Type', choices=[ 
         ('', '-- Please select --'),
         ('Lecture', 'Lecture'),
@@ -1591,12 +1591,12 @@ class AddGenEdCourseForm(FlaskForm):
     faculty = SelectField('Faculty', choices=[], validators=[Optional()])
     submit = SubmitField('Add Course')
 
-def add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, course_block, course_type, faculty_id=None):
+def add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, course_block,capacity, course_type, faculty_id=None):
     cur = g.mysql.connection.cursor()
     try:
         # Adjust the INSERT statement according to your courses table structure
-        cur.execute("INSERT INTO gened_courses (course_name, course_code, units, hours_per_week, course_block, course_type, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                    (course_name, course_code, units, hours_per_week, course_block, course_type, faculty_id))
+        cur.execute("INSERT INTO gened_courses (course_name, course_code, units, hours_per_week, course_block,capacity, type, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (course_name, course_code, units, hours_per_week, course_block,capacity, course_type, faculty_id))
         g.mysql.connection.commit()
         
         if faculty_id:
@@ -1646,12 +1646,13 @@ def add_gened_course():
         units = form.units.data
         hours_per_week = form.hours_per_week.data
         course_block = form.course_block.data
+        capacity = form.capacity.data
         course_type = form.course_type.data
         faculty_id = form.faculty.data if form.faculty.data else None
         
         logger.info(f"Form data: course_name={course_name}, course_code={course_code}, units={units}, hours_per_week={hours_per_week}, course_block={course_block}, course_type={course_type}, faculty_id={faculty_id}")
         
-        add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, course_block, course_type, faculty_id=faculty_id)
+        add_gen_ed_course_to_db(course_name, course_code, units, hours_per_week, course_block,capacity, course_type, faculty_id=faculty_id)
         flash('Course added successfully!', 'success')
         return redirect(url_for('my_blueprint.genEd_courses'))
     else:
@@ -2485,9 +2486,11 @@ def create_room_schedule():
     else:
         allocations = []
     
-    cur.close()
+    # Fetch the list of departments
+    cur.execute("SELECT DISTINCT department FROM room_courses")
+    departments = cur.fetchall()
     
-    # Debugging: Print allocations
+    cur.close()
     
     # Group allocations by room_id
     room_allocations = {}
@@ -2496,8 +2499,6 @@ def create_room_schedule():
         if room_id not in room_allocations:
             room_allocations[room_id] = []
         room_allocations[room_id].append(allocation)
-    
-    # Debugging: Print room_allocations
     
     # Convert decimal times to HH:MM format
     for room_id, room_allocation in room_allocations.items():
@@ -2509,7 +2510,8 @@ def create_room_schedule():
                            current_endpoint=request.endpoint,
                            classrooms=classrooms,
                            room_allocations=room_allocations,
-                           floor_level=floor_level)
+                           floor_level=floor_level,
+                           departments=departments)
 
 # ========================================================CREATE SCHEDULE======================================================
 
@@ -2872,3 +2874,117 @@ def gened_export_csv():
         return redirect(url_for('my_blueprint.gened_create'))
     finally:
         cur.close()
+
+
+class EditAccountForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField("New Password")
+    confirmPassword = PasswordField("Confirm Password", validators=[EqualTo('password')])
+    submit = SubmitField('Update')
+
+
+@bp.route('/edit-account', methods=['GET', 'POST'])
+def edit_account():
+    # Get the current user's ID from the session
+    current_user_id = session.get('user_id')
+    current_app.logger.debug(f"Current user ID from session: {current_user_id}")
+    
+    if not current_user_id:
+        flash('You must be logged in to edit your account.', 'error')
+        return redirect(url_for('my_blueprint.admin'))
+
+    cur = g.mysql.connection.cursor()
+    try:
+        # Fetch the user details
+        cur.execute("SELECT username, email FROM users WHERE user_id = %s", (current_user_id,))
+        user_data = cur.fetchone()
+        if not user_data:
+            flash('User not found.', 'error')
+            return redirect(url_for('my_blueprint.admin'))
+        current_app.logger.debug(f"Fetched user data: {user_data}")
+
+        # Prepare the form
+        form = EditAccountForm()
+
+        if form.validate_on_submit():
+            try:
+                # Update user information
+                cur.execute("UPDATE users SET username = %s, email = %s WHERE user_id = %s",
+                            (form.username.data, form.email.data, current_user_id))
+                g.mysql.connection.commit()
+                current_app.logger.debug(f"Affected rows: {cur.rowcount}")
+                if cur.rowcount == 0:
+                    current_app.logger.warning(f"No rows affected for user_id: {current_user_id}")
+                    flash('No changes were made to the user information.', 'warning')
+                else:
+                    flash('User information updated successfully!', 'success')
+
+                # Update password only if provided
+                if form.password.data:
+                    hashed_password = bcrypt.hashpw(form.password.data.encode('utf-8'), bcrypt.gensalt())
+                    cur.execute("UPDATE users SET password = %s WHERE user_id = %s", (hashed_password, current_user_id))
+                    g.mysql.connection.commit()
+                    current_app.logger.debug(f"Password updated for user_id: {current_user_id}")
+                    flash('Password updated successfully!', 'success')
+            except Exception as e:
+                current_app.logger.error(f"An error occurred: {e}")
+                flash('Failed to update user.', 'danger')
+            finally:
+                cur.close()
+
+            return redirect(url_for('my_blueprint.edit_account'))
+        else:
+            # If form doesn't validate, populate form with user data and render the template
+            form.username.data = user_data[0]
+            form.email.data = user_data[1]
+
+            # Check for validation errors
+            if form.password.errors:
+                flash(' '.join(form.password.errors), 'error')
+            if form.confirmPassword.errors:
+                flash(' '.join(form.confirmPassword.errors), 'error')
+            
+            # Check for email validation error specifically
+            if form.email.errors:
+                flash(form.email.errors[0], 'error')
+
+            return render_template('edit_user_account.html', form=form, current_endpoint=request.endpoint)
+
+    except Exception as e:
+        current_app.logger.error(f"An error occurred during ownership check: {str(e)}")
+        flash('An error occurred while processing your request.', 'error')
+    finally:
+        cur.close()
+
+    return redirect(url_for('my_blueprint.edit_account'))
+
+
+
+@bp.route('/export-schedule', methods=['GET'])
+def export_schedule():
+    department_id = request.args.get('department')
+    
+    # Fetch the data from the final_allocations table based on the selected department
+    cur = g.mysql.connection.cursor()
+    cur.execute("""
+        SELECT rc.course_code, rc.block, rc.start_time, rc.end_time, rc.day, cl.room_no, rc.department
+        FROM final_allocations fa
+        JOIN room_courses rc ON fa.course_id = rc.course_id
+        JOIN classrooms cl ON fa.room_id = cl.room_id
+        WHERE rc.department = %s
+    """, (department_id,))
+    allocations = cur.fetchall()
+    cur.close()
+
+    # Create the CSV response
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Course Code', 'Block', 'Start Time', 'End Time', 'Day', 'Room No', 'Department'])
+    for allocation in allocations:
+        cw.writerow(allocation)
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=schedule.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output

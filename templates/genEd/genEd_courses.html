@@ -93,7 +93,14 @@
                 </div>
                 <div class="form-element">
                     <label for="type">Type</label>
-                    <input type="number" id="type" name="type" placeholder="type" required>
+                    <div class="select-box">
+                    <select id="course_type" name="course_type">
+                        <option value="">-- Please select --</option>
+                        <option value="Lecture">Lecture</option>
+                        <option value="Networking">Comp Laboratory</option>
+                        <option value="Engineering Laboratory">Engineering Laboratory</option>
+                    </select>
+                </div>
                 </div>
                 <div class="form-element">
                     <button type="submit">Add Course</button>

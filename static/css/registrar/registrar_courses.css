@@ -75,15 +75,16 @@
     font-size: 16pt;
   }
 }
-#department-filter {
-    padding: 10px;
+.department-filter {
+    padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 16px;
     margin-right: 10px;
+    outline: none;
 }
-#department-filter:active{
-    border: none;
+.department-filter:active{
+    outline: none
 }
 #filter-button {
     padding: 10px 20px;
@@ -93,6 +94,7 @@
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
+    outline: none
 }
 
 #filter-button:hover {
