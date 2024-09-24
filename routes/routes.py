@@ -139,7 +139,7 @@ def faculties():
         # Assuming you have a function to insert faculty into the database
         add_faculty_to_db(first_name, last_name, faculty_units, faculty_type, department)
 
-        flash('Faculty added successfully!', 'success')
+        # flash('Faculty added successfully!', 'success')
         return redirect(url_for('my_blueprint.faculties'))
 
     # Pass the form, the list of programs, and the list of faculty members to the template
@@ -2891,7 +2891,7 @@ def edit_account():
     current_app.logger.debug(f"Current user ID from session: {current_user_id}")
     
     if not current_user_id:
-        flash('You must be logged in to edit your account.', 'error')
+        flash('You must be logged in to edit your account.', 'account_error')
         return redirect(url_for('my_blueprint.admin'))
 
     cur = g.mysql.connection.cursor()
@@ -2900,7 +2900,7 @@ def edit_account():
         cur.execute("SELECT username, email FROM users WHERE user_id = %s", (current_user_id,))
         user_data = cur.fetchone()
         if not user_data:
-            flash('User not found.', 'error')
+            flash('User not found.', 'account_error')
             return redirect(url_for('my_blueprint.admin'))
         current_app.logger.debug(f"Fetched user data: {user_data}")
 
@@ -2916,9 +2916,9 @@ def edit_account():
                 current_app.logger.debug(f"Affected rows: {cur.rowcount}")
                 if cur.rowcount == 0:
                     current_app.logger.warning(f"No rows affected for user_id: {current_user_id}")
-                    flash('No changes were made to the user information.', 'warning')
+                    flash('No changes were made to the user information.', 'account_warning')
                 else:
-                    flash('User information updated successfully!', 'success')
+                    flash('User information updated successfully!', 'account_success')
 
                 # Update password only if provided
                 if form.password.data:
@@ -2926,10 +2926,10 @@ def edit_account():
                     cur.execute("UPDATE users SET password = %s WHERE user_id = %s", (hashed_password, current_user_id))
                     g.mysql.connection.commit()
                     current_app.logger.debug(f"Password updated for user_id: {current_user_id}")
-                    flash('Password updated successfully!', 'success')
+                    flash('Password updated successfully!', 'account_success')
             except Exception as e:
                 current_app.logger.error(f"An error occurred: {e}")
-                flash('Failed to update user.', 'danger')
+                flash('Failed to update user.', 'account_danger')
             finally:
                 cur.close()
 
@@ -2941,19 +2941,19 @@ def edit_account():
 
             # Check for validation errors
             if form.password.errors:
-                flash(' '.join(form.password.errors), 'error')
+                flash(' '.join(form.password.errors), 'account_error')
             if form.confirmPassword.errors:
-                flash(' '.join(form.confirmPassword.errors), 'error')
+                flash(' '.join(form.confirmPassword.errors), 'account_error')
             
             # Check for email validation error specifically
             if form.email.errors:
-                flash(form.email.errors[0], 'error')
+                flash(form.email.errors[0], 'account_error')
 
             return render_template('edit_user_account.html', form=form, current_endpoint=request.endpoint)
 
     except Exception as e:
         current_app.logger.error(f"An error occurred during ownership check: {str(e)}")
-        flash('An error occurred while processing your request.', 'error')
+        flash('An error occurred while processing your request.', 'account_error')
     finally:
         cur.close()
 

@@ -65,8 +65,9 @@ def create_app():
         ('registrar', 'Registrar'),
         ('dept-head', 'Department Head')],validators=[DataRequired()])
         department = SelectField("Department", choices=[
-            ('REGISTRAR', 'REGISTRAR'),
+            ('ADMIN', 'ADMIN'),
             ('GENED', 'GENED'),
+            ('REGISTRAR', 'REGISTRAR'),
             ('CSIT', 'CSIT'),
             ('ENGINEERING', 'ENGINEERING'),
             ('SON', 'SON'),
@@ -81,7 +82,7 @@ def create_app():
     class LoginForm(FlaskForm):
         email = StringField("Email", validators=[DataRequired(), Email()])
         password = PasswordField("Password", validators=[DataRequired()])
-        submit = SubmitField("Submit") 
+        submit = SubmitField("Login") 
 
 
 
@@ -110,13 +111,13 @@ def create_app():
                         """
                         cursor.execute(insert_query, (username, email, hashed_password.decode('utf-8'), role, department, isVerified))
                         mysql.connection.commit()
-                        print("=======User added=========")
+                        flash('Account created successfully!', 'success')
                         return redirect(url_for('addAccount'))
                     except Exception as e:
                         print(f"Database operation failed: {e}")
                         cursor.close()
                 else:
-                    print("Form validation failed:", dept_head_form.errors)
+                    flash('Form validation failed. Please check the input fields.', 'danger')
             return render_template('add_account.html', dept_head_form=dept_head_form)
         else:
             return redirect(url_for('my_blueprint.home'))

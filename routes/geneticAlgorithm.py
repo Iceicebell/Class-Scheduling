@@ -329,7 +329,8 @@ class Solution:
         for section_id, assignments in self.schedule.items():
             print(f"\nSchedule for Section {section_id}:")
             for course_id, day, start_hour, duration, course_code, course_block in assignments:  # Correctly unpacking five elements
-                print(f"Course ID: {course_id}, Day: {day}, Start Hour: {start_hour}, Duration: {duration}, Course Code: {course_code}, Block: {course_block}")
+                pass
+                # print(f"Course ID: {course_id}, Day: {day}, Start Hour: {start_hour}, Duration: {duration}, Course Code: {course_code}, Block: {course_block}")
 
             
             # Organize schedule by day for the current section
@@ -472,7 +473,7 @@ def generate_initial_solution():
         print(f"Number of columns in first row: {len(sections_data[0])}")
 
         # Fetch unavailable times for each section to mark them in the schedule
-        print("Processing unavailable times...")
+        # print("Processing unavailable times...")
         for section_id, _, _, _, _ in sections_data:
             try:
                 solution.fetch_unavailable_times(cursor, section_id)
@@ -492,7 +493,7 @@ def generate_initial_solution():
         # Rest of the function remains the same...
         print("Generating initial solution...")
         for (course_code, course_block), courses in grouped_courses.items():
-            print(f"Processing course group: {course_code}/{course_block}")
+            # print(f"Processing course group: {course_code}/{course_block}")
             day_options = ['Monday', 'Tuesday', 'Thursday']
             day = random.choice(day_options)
             second_day = solution.get_pair_day(day)
@@ -505,26 +506,26 @@ def generate_initial_solution():
             print(f"Day: {day}, Second Day: {second_day}, Start Hour: {start_hour}")
             
             for section_id, course_id, hours_per_week in courses:
-                print(f"Processing course: {course_id} ({course_code}/{course_block})")
+                # print(f"Processing course: {course_id} ({course_code}/{course_block})")
                 
                 try:
-                    print(f"Course details: Section ID: {section_id}, Course ID: {course_id}, Hours per week: {hours_per_week}")
+                    # print(f"Course details: Section ID: {section_id}, Course ID: {course_id}, Hours per week: {hours_per_week}")
                     
                     hours_per_week_decimal = Decimal(hours_per_week)
-                    print(f"Hours per week decimal: {hours_per_week_decimal}")
+                    # print(f"Hours per week decimal: {hours_per_week_decimal}")
                     
                     if hours_per_week_decimal > Decimal(2):
                         split_duration_decimal = hours_per_week_decimal / Decimal(2)
-                        print(f"Split duration: {split_duration_decimal}")
+                        # print(f"Split duration: {split_duration_decimal}")
                         
                         solution.add_course_assignment(section_id, course_id, day, start_hour, split_duration_decimal, course_code, course_block, cursor)
-                        print(f"Added first part of split course")
+                        # print(f"Added first part of split course")
                         
                         solution.add_course_assignment(section_id, course_id, second_day, start_hour, split_duration_decimal, course_code, course_block, cursor)
-                        print(f"Added second part of split course")
+                        # print(f"Added second part of split course")
                     else:
                         solution.add_course_assignment(section_id, course_id, day, start_hour, hours_per_week_decimal, course_code, course_block, cursor)
-                        print(f"Added non-split course")
+                        # print(f"Added non-split course")
                     
                 except Exception as e:
                     print(f"Error processing course {course_id}: {str(e)}")
@@ -721,7 +722,7 @@ def generate():
 
             # Commit the changes
             db.commit()
-
+            flash('Algorithm completed successfully. The page will reload to display the changes.')
         faculty_timetable = generate_faculty_timetable(cursor, session.get('user_id'))
             
 

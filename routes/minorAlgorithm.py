@@ -187,7 +187,7 @@ class Solution:
             print(f"\nSchedule for {course_code}:")
             for assignment in assignments:
                 day, start_hour, duration, course_code, course_block = assignment
-                print(f"Day: {day}, Start Hour: {start_hour:.2f}, Duration: {duration:.2f}, Block: {course_block}")
+                # print(f"Day: {day}, Start Hour: {start_hour:.2f}, Duration: {duration:.2f}, Block: {course_block}")
 
 def generate_initial_solution():
     solution = Solution(shared_schedule={})
@@ -443,7 +443,7 @@ def generate():
 
             # Commit the changes
             db.commit()
-
+            flash('Algorithm completed successfully. The page will reload to display the changes.')
     # Render the template with both student and faculty timetables
     return render_template('genEd/genEd_generate.html',
                            form=form,

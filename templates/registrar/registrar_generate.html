@@ -1,8 +1,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_courses.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
 {% extends "registrar/registrar.html" %}
 
 {% block content %}
+<div class="loader" id="loader" style="display: none;"></div>
 <div class="table_header1">
     <form id="generateForm" method="POST">
         {{ form.hidden_tag() }}
@@ -62,4 +64,5 @@
     </div>
 </div>
 {% endfor %}
+<script src="{{ url_for('static', filename='js/scripts/loading.js') }}"></script>
 {% endblock %}

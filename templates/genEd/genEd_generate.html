@@ -2,10 +2,12 @@
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_content.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
 {% extends "genEd/genEd.html" %}
     {% block content %}
     
 <!-- <div class="loader"></div> -->
+<div class="loader" id="loader" style="display: none;"></div>
 <form id="generateForm" method="POST">
     {{ form.hidden_tag() }}
     <div class="coolinput">
@@ -157,5 +159,6 @@
         </div>
     </div>
 </span>
+<script src="{{ url_for('static', filename='js/scripts/loading.js') }}"></script>
 <script src="{{ url_for('static', filename='js/scripts/genEd/genEd.js') }}"></script>
     {% endblock %}

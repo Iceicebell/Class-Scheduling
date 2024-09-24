@@ -303,7 +303,7 @@ def room_schedule():
         cursor.close()
         conn.close()
         
-        flash('Schedule generated and saved successfully!', 'success')
+        flash('Algorithm completed successfully. The page will reload to display the changes.')
         return redirect(url_for('RoomAlgorithm.room_schedule', floor_level=floor_level))
     
     conn = get_db_connection()

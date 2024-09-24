@@ -11,8 +11,7 @@
   justify-content: center;
   align-items: center;
   transition: opacity 0.75s, visibility 0.75s;
-  opacity: 0;
-  visibility: hidden;
+
 }
 .loader-hidden {
   opacity: 0;
