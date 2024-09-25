@@ -2760,13 +2760,15 @@ def edit_schedule(course_code, course_block):
 
     return redirect(url_for('my_blueprint.create'))
 
-
 @bp.route('/export-csv', methods=['GET'])
 def export_csv():
     cur = g.mysql.connection.cursor()
+    department = session.get('department')
     try:
-        # Get the current user's ID from the session
+        # Get the current user's ID and department from the session
         current_user_id = session.get('user_id')
+        
+
         logger.debug(f"Current user ID: {current_user_id}")
 
         # Query to fetch the required data
@@ -2801,7 +2803,7 @@ def export_csv():
             start_time = float(start_hour)
             end_time = start_time + float(duration)
             start_time_str = f"{int(start_time):02d}:{int((start_time % 1) * 60):02d}"
-            end_time_str = f"{int(end_time):02d}:{int((end_time % 1) * 60):02d}"
+            end_time_str = f"{int(end_time):02d}:{int(((end_time) % 1) * 60):02d}"
 
             # Create a unique key for each course
             course_key = (course_code, course_block, start_time_str, day)
@@ -2811,7 +2813,8 @@ def export_csv():
                 writer.writerow([course_code, capacity, course_type, course_block, department, start_time_str, end_time_str, day])
 
         output.seek(0)
-        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=schedule.csv"})
+        filename = f"{department}_schedule.csv"
+        return Response(output, mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}"})
     except Exception as e:
         logger.error(f"An error occurred while exporting CSV: {e}")
         flash('Failed to export CSV.', 'danger')
@@ -2867,7 +2870,7 @@ def gened_export_csv():
                 writer.writerow([course_code, capacity, course_type, course_block, department, start_time_str, end_time_str, day])
 
         output.seek(0)
-        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=schedule.csv"})
+        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=genEd_schedule.csv"})
     except Exception as e:
         logger.error(f"An error occurred while exporting CSV: {e}")
         flash('Failed to export CSV.', 'danger')

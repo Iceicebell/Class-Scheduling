@@ -1,4 +1,6 @@
+import cProfile
 from decimal import Decimal
+import pstats
 import random
 from typing import Optional
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, abort, session, url_for
@@ -24,11 +26,11 @@ db_config = {
 
 bp = Blueprint('RoomAlgorithm', __name__)
 
-# Connect to the database
+
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
-# Fetch classrooms from the database
+
 def fetch_classrooms():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -38,7 +40,7 @@ def fetch_classrooms():
     conn.close()
     return classrooms
 
-# Fetch room courses from the database excluding those already in final_allocations
+
 def fetch_room_courses():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -51,7 +53,7 @@ def fetch_room_courses():
     conn.close()
     return room_courses
 
-# Fetch existing allocations from final_allocations
+
 def fetch_existing_allocations():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -65,7 +67,7 @@ def fetch_existing_allocations():
     cursor.close()
     conn.close()
     
-    # Convert to list of tuples (course, room)
+    
     formatted_allocations = []
     for allocation in existing_allocations:
         course = {
@@ -89,7 +91,7 @@ def fetch_existing_allocations():
     
     return formatted_allocations
 
-# Genetic Algorithm Parameters
+
 mutation_rate = 0.01
 
 def initialize_population(classrooms, room_courses, population_size, existing_allocations):
@@ -104,7 +106,7 @@ def initialize_population(classrooms, room_courses, population_size, existing_al
             course_groups[key].append(course)
         
         for group in course_groups.values():
-            # Prioritize room assignment based on department and floor preferences
+
             preferred_rooms = []
             for course in group:
                 if course['department'] in ['CSIT', 'Engineering']:
@@ -183,13 +185,6 @@ def fitness(schedule):
 
     return score
 
-def tournament_selection(population, tournament_size=3):
-    selected = []
-    for _ in range(len(population)):
-        tournament = random.sample(population, tournament_size)
-        winner = max(tournament, key=lambda x: fitness(x))
-        selected.append(winner)
-    return selected
 
 def crossover(parent1, parent2):
     crossover_point = random.randint(0, len(parent1) - 1)
@@ -225,14 +220,18 @@ def mutate(schedule, classrooms):
                 schedule[i] = (course, new_room)
     return schedule
 
-# Example usage
-def selection(population):
-    return tournament_selection(population)
+
+def select_parents(population, tournament_size=3):
+    def tournament(population, size):
+        tournament_group = random.sample(population, size)
+        return max(tournament_group, key=fitness)
+
+    return tournament(population, tournament_size), tournament(population, tournament_size)
 
 def genetic_algorithm(classrooms, room_courses, population_size, generations, existing_allocations):
     population = initialize_population(classrooms, room_courses, population_size, existing_allocations)
     for _ in range(generations):
-        selected = tournament_selection(population)
+        selected = select_parents(population)
         next_generation = []
         while len(next_generation) < population_size:
             parent1, parent2 = random.sample(selected, 2)
@@ -242,7 +241,7 @@ def genetic_algorithm(classrooms, room_courses, population_size, generations, ex
         population = next_generation
     best_schedule = max(population, key=lambda x: fitness(x))
     
-    # Identify conflicts
+    
     conflicts = []
     for i, (course1, room1) in enumerate(best_schedule):
         for j, (course2, room2) in enumerate(best_schedule):
@@ -255,7 +254,7 @@ def save_schedule_to_db(schedule):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Insert new allocations
+        
         for course, room in schedule:
             cursor.execute(
                 "INSERT INTO allocations (course_id, room_id) VALUES (%s, %s)",
@@ -271,7 +270,7 @@ def save_schedule_to_db(schedule):
 
 class GenerateForm(FlaskForm):
     population_size = IntegerField('Population Size', default=100)
-    max_generations = IntegerField('Max Generations', default=1000)
+    max_generations = IntegerField('Max Generations', default=500)
     submit = SubmitField('Generate Schedule')
 
 @bp.route('/generate-schedule', methods=['GET', 'POST'])
@@ -283,25 +282,30 @@ def room_schedule():
         population_size = form.population_size.data
         generations = form.max_generations.data
         
-        # Fetch data from the database
+        # Start profiling
+        profiler = cProfile.Profile()
+        profiler.enable()
+        
         classrooms = fetch_classrooms()
         room_courses = fetch_room_courses()
         existing_allocations = fetch_existing_allocations()
         
-        # Run the genetic algorithm
         best_schedule, conflicts = genetic_algorithm(classrooms, room_courses, population_size, generations, existing_allocations)
         
-        # Delete all existing data from the allocations table
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM allocations")
         conn.commit()
         
-        # Save the schedule to the database
         save_schedule_to_db(best_schedule)
         
         cursor.close()
         conn.close()
+        
+        # Stop profiling
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats('cumtime')
+        stats.print_stats(10)
         
         flash('Algorithm completed successfully. The page will reload to display the changes.')
         return redirect(url_for('RoomAlgorithm.room_schedule', floor_level=floor_level))
@@ -309,11 +313,9 @@ def room_schedule():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # Fetch classrooms for the selected floor level
     cursor.execute("SELECT * FROM classrooms WHERE floor_level = %s", (floor_level,))
     classrooms = cursor.fetchall()
     
-    # Fetch allocations and join with room_courses to get course details
     classroom_ids = [classroom['room_id'] for classroom in classrooms]
     if classroom_ids:
         format_strings = ','.join(['%s'] * len(classroom_ids))
@@ -331,7 +333,6 @@ def room_schedule():
     cursor.close()
     conn.close()
     
-    # Group allocations by room_id
     room_allocations = {}
     for allocation in allocations:
         room_id = allocation['room_id']
@@ -339,7 +340,6 @@ def room_schedule():
             room_allocations[room_id] = []
         room_allocations[room_id].append(allocation)
     
-    # Convert decimal times to HH:MM format
     for room_id, room_allocation in room_allocations.items():
         for allocation in room_allocation:
             allocation['start_time'] = decimal_to_time(allocation['start_time'])

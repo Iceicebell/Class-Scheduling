@@ -43,7 +43,13 @@
                                 <tbody id="course-tbody">
                                     {% for course in all_courses %}
                                         <tr>
-                                            <td><input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}"></td>
+                                            <td>
+                                                {% if course[6] %}
+                                                <input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}">
+                                                    
+                                                {% else %}
+                                                    <a href="/edit-course/{{course[0]}}" class="missing">No Faculty Assigned</a>
+                                                {% endif %}
                                             <td>{{ course[1] }}</td>
                                             <td>{{ course[2] }}</td>
                                             <td>{{ course[3] }}</td>

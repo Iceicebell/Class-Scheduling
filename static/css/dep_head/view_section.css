@@ -148,7 +148,9 @@ tr:hover td{
     cursor: pointer;
     background-color: #f6f9fc;
 }
-
+.missing{
+    color: red;
+}
 
 ::-webkit-scrollbar{
     height: 5px;
