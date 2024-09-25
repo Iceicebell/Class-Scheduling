@@ -1,4 +1,6 @@
+import cProfile
 from decimal import Decimal
+import pstats
 import random
 from typing import Optional
 from flask import Blueprint, current_app, flash, has_app_context, jsonify, redirect, render_template, render_template_string, request, abort, session, url_for
@@ -36,6 +38,7 @@ MAX_GENERATIONS = 5
 MUTATION_RATE = 0.1
     
 class Solution:
+    faculty_cache = {}
     def __init__(self, schedule=None, shared_schedule=None):
         self.schedule = schedule if schedule else {}
         self.shared_schedule = shared_schedule if shared_schedule else {}
@@ -182,10 +185,15 @@ class Solution:
 
 
     def get_faculty_id(self, cursor, course_id):
+        if course_id in self.faculty_cache:
+            return self.faculty_cache[course_id]
+        
         query = "SELECT faculty_id FROM courses WHERE course_id = %s"
         cursor.execute(query, (course_id,))
         result = cursor.fetchone()
-        return result[0] if result else None
+        faculty_id = result[0] if result else None
+        self.faculty_cache[course_id] = faculty_id
+        return faculty_id
 
     def check_unit_match(self, cursor):
         unit_match_score = 0
@@ -232,14 +240,14 @@ class Solution:
                         end_time1 = start_hour1 + duration1
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1:  # Overlap check
-                            conflicts_penalty += 1000  # Simple penalty, adjust based on severity
+                            conflicts_penalty += 2000  # Simple penalty, adjust based on severity
                         
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         
                         # Only penalize for faculty conflict if course_code and block are different
                         if faculty_id1 == faculty_id2 and (course_code1 != course_code2 or course_block1 != course_block2):
-                            conflicts_penalty += 1000  # Adjust penalty as needed
+                            conflicts_penalty += 2000  # Adjust penalty as needed
 
         # Penalty for disregarding lunch breaks
         for section_id, assignments in self.schedule.items():
@@ -256,7 +264,7 @@ class Solution:
                     course_code_block_groups[key] = []
                 course_code_block_groups[key].append((course_id, day, start_hour, duration))
                 if len(course_code_block_groups[key]) > 1:  # More than one instance of the same course-code-block grouping
-                    integrity_reward += 2000  # Reward for keeping them together
+                    integrity_reward += 1000  # Reward for keeping them together
 
         # Reward for efficient utilization (simple example: reward for filling morning and afternoon slots)
         for section_id, assignments in self.schedule.items():
@@ -329,8 +337,7 @@ class Solution:
         for section_id, assignments in self.schedule.items():
             print(f"\nSchedule for Section {section_id}:")
             for course_id, day, start_hour, duration, course_code, course_block in assignments:  # Correctly unpacking five elements
-                pass
-                # print(f"Course ID: {course_id}, Day: {day}, Start Hour: {start_hour}, Duration: {duration}, Course Code: {course_code}, Block: {course_block}")
+                print(f"Course ID: {course_id}, Day: {day}, Start Hour: {start_hour}, Duration: {duration}, Course Code: {course_code}, Block: {course_block}")
 
             
             # Organize schedule by day for the current section
@@ -468,9 +475,9 @@ def generate_initial_solution():
         print("Fetching results...")
         sections_data = cursor.fetchall()
         
-        print(f"sections_data length: {len(sections_data)}")
-        print(f"First row of sections_data: {sections_data[0]}")
-        print(f"Number of columns in first row: {len(sections_data[0])}")
+        # print(f"sections_data length: {len(sections_data)}")
+        # print(f"First row of sections_data: {sections_data[0]}")
+        # print(f"Number of columns in first row: {len(sections_data[0])}")
 
         # Fetch unavailable times for each section to mark them in the schedule
         # print("Processing unavailable times...")
@@ -478,9 +485,10 @@ def generate_initial_solution():
             try:
                 solution.fetch_unavailable_times(cursor, section_id)
             except Exception as e:
-                print(f"Error fetching unavailable times for section {section_id}: {str(e)}")
+                pass
+                # print(f"Error fetching unavailable times for section {section_id}: {str(e)}")
 
-        print("Grouping courses...")
+        # print("Grouping courses...")
         grouped_courses = {}
         for section_id, course_id, hours_per_week, course_code, course_block in sections_data:
             key = (course_code, course_block)
@@ -488,7 +496,7 @@ def generate_initial_solution():
                 grouped_courses[key] = []
             grouped_courses[key].append((section_id, course_id, hours_per_week))
 
-        print(f"Number of grouped courses: {len(grouped_courses)}")
+        # print(f"Number of grouped courses: {len(grouped_courses)}")
         
         # Rest of the function remains the same...
         print("Generating initial solution...")
@@ -503,7 +511,7 @@ def generate_initial_solution():
             combined_periods = list(morning_period) + list(afternoon_period)
             start_hour = random.choice(combined_periods)
             
-            print(f"Day: {day}, Second Day: {second_day}, Start Hour: {start_hour}")
+            # print(f"Day: {day}, Second Day: {second_day}, Start Hour: {start_hour}")
             
             for section_id, course_id, hours_per_week in courses:
                 # print(f"Processing course: {course_id} ({course_code}/{course_block})")
@@ -532,7 +540,7 @@ def generate_initial_solution():
                     import traceback
                     traceback.print_exc()
             
-            print(f"Finished processing course group: {course_code}/{course_block}")
+            # print(f"Finished processing course group: {course_code}/{course_block}")
 
         logging.info("Initial solution generated.")
     finally:
@@ -600,8 +608,8 @@ def get_best_solution():
     return run_genetic_algorithm(initial_solution)
 
 class GenerateForm(FlaskForm):
-    population_size = IntegerField('Population Size', default=50)
-    max_generations = IntegerField('Max Generations', default=100)
+    population_size = IntegerField('Population Size', default=100)
+    max_generations = IntegerField('Max Generations', default=500)
     submit = SubmitField('Generate Schedule')
 def generate_faculty_timetable(cursor, current_user_id):
     faculty_timetable = {}
@@ -694,21 +702,27 @@ def generate():
             POPULATION_SIZE = form.population_size.data
             MAX_GENERATIONS = form.max_generations.data
 
-            # Run the genetic algorithm and get the best solution
+            # Profile the genetic algorithm
+            profiler = cProfile.Profile()
+            profiler.enable()
             best_solution = get_best_solution()
+            profiler.disable()
+            stats = pstats.Stats(profiler).sort_stats('cumtime')
+            stats.print_stats(10)  # Print the top 10 slowest functions
 
             # Clear existing solutions for this user
             cursor.execute("DELETE FROM user_solutions WHERE user_id = %s", (session['user_id'],))
 
             # Save the best solution to the database
+            query = """
+                INSERT INTO user_solutions 
+                (id, user_id, section_id, course_id, day, start_hour, duration, course_code, course_block)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            values = []
             for section_id, courses in best_solution.schedule.items():
                 for course_id, day, start_hour, duration, course_code, course_block in courses:
-                    query = """
-                        INSERT INTO user_solutions 
-                        (id, user_id, section_id, course_id, day, start_hour, duration, course_code, course_block)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """
-                    cursor.execute(query, (
+                    values.append((
                         None,
                         session['user_id'],
                         section_id,
@@ -719,6 +733,8 @@ def generate():
                         course_code,
                         course_block
                     ))
+
+            cursor.executemany(query, values)
 
             # Commit the changes
             db.commit()

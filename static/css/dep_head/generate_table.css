@@ -15,8 +15,8 @@
 }
 .table{
     width: calc(100%-100px);
-    margin-left: 50px;
-    margin-right: 50px;
+    margin-left: 20px;
+    margin-right: 20px;
     margin-top: 25px;
     margin-bottom: 25px;
     box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
@@ -101,7 +101,7 @@ thead th{
 
 th,td{
     border-bottom: .5px solid rgb(59, 112, 151,0.2);
-    padding: 10px 20px;
+    padding: 10px 10px;
     word-break: break-all;
     text-align: center;
 }

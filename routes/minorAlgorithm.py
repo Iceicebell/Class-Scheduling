@@ -1,5 +1,7 @@
+import cProfile
 from copy import deepcopy
 from decimal import Decimal
+import pstats
 import random
 from typing import Optional
 from flask import Blueprint, current_app, flash, has_app_context, jsonify, redirect, render_template, render_template_string, request, abort, session, url_for
@@ -31,11 +33,15 @@ logger = logging.getLogger(__name__)
 POPULATION_SIZE = 5
 MAX_GENERATIONS = 5
 MUTATION_RATE = 0.1
+
+
 class Solution:
+    faculty_cache = {}
     def __init__(self, schedule=None, shared_schedule=None):
         self.schedule = schedule if schedule else {}
         self.shared_schedule = shared_schedule if shared_schedule else {}
         self.fitness_score = None
+        
 
     def add_course_assignment(self, course_id, day, start_hour, duration, course_code, course_block, cursor):
         if course_id not in self.schedule:
@@ -104,12 +110,19 @@ class Solution:
             'Thursday': 'Saturday'
         }
         return day_pairs.get(day, day)
+    
+    
 
     def get_faculty_id(self, cursor, course_id):
-        query = "SELECT faculty_id FROM gened_courses WHERE course_id = %s"
+        if course_id in self.faculty_cache:
+            return self.faculty_cache[course_id]
+        
+        query = "SELECT faculty_id FROM courses WHERE course_id = %s"
         cursor.execute(query, (course_id,))
         result = cursor.fetchone()
-        return result[0] if result else None
+        faculty_id = result[0] if result else None
+        self.faculty_cache[course_id] = faculty_id
+        return faculty_id
 
 
     def calculate_fitness(self, cursor):
@@ -340,8 +353,8 @@ def get_best_solution():
 
 
 class GenerateForm(FlaskForm):
-    population_size = IntegerField('Population Size', default=50)
-    max_generations = IntegerField('Max Generations', default=100)
+    population_size = IntegerField('Population Size', default=100)
+    max_generations = IntegerField('Max Generations', default=500)
     submit = SubmitField('Generate Schedule')
 
 
@@ -403,34 +416,37 @@ def generate():
                     'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
                 }
 
-
     if request.method == 'POST':
         if form.validate_on_submit():
             global POPULATION_SIZE, MAX_GENERATIONS
             POPULATION_SIZE = form.population_size.data
             MAX_GENERATIONS = form.max_generations.data
 
-            # Run the genetic algorithm and get the best solution
+            # Profile the genetic algorithm
+            profiler = cProfile.Profile()
+            profiler.enable()
             best_solution = get_best_solution()
+            profiler.disable()
+            stats = pstats.Stats(profiler).sort_stats('cumtime')
+            stats.print_stats(10)  # Print the top 10 slowest functions
 
             # Clear existing solutions for this user
             cursor.execute("DELETE FROM gened_solutions WHERE user_id = %s", (session['user_id'],))
 
             # Save the best solution to the database
+            query = """
+                INSERT INTO gened_solutions 
+                (id, user_id, course_id, day, start_hour, duration, course_code, course_block)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            values = []
             for course_id, assignments in best_solution.schedule.items():
                 for assignment in assignments:
                     try:
                         day, start_hour, duration, course_code, course_block = assignment
                     except ValueError:
-                        # print(f"Invalid assignment format for course {course_id}: {assignment}")
                         continue
-                    
-                    query = """
-                        INSERT INTO gened_solutions 
-                        (id, user_id, course_id, day, start_hour, duration, course_code, course_block)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """
-                    cursor.execute(query, (
+                    values.append((
                         None,
                         session['user_id'],
                         course_id,
@@ -440,6 +456,8 @@ def generate():
                         course_code,
                         course_block
                     ))
+
+            cursor.executemany(query, values)
 
             # Commit the changes
             db.commit()

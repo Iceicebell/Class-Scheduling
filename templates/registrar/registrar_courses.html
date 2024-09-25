@@ -6,16 +6,18 @@
 
 <div class="table">
     <div class="table_header">
-        <p>Accounts</p>
+        <p>Courses</p>
         <div>
-            <select class="department-filter" required>
-                <option value="">All Departments</option>
-                {% for department in departments %}
-                <option value="{{ department[0] }}" {% if department[0] == department_filter %}selected{% endif %}>{{ department[0] }}</option>
-                {% endfor %}
-            </select>
+            <form method="GET" action="{{ url_for('my_blueprint.registrar_courses') }}">
+                <select class="department-filter" name="department" onchange="this.form.submit()">
+                    <option value="">All Departments</option>
+                    {% for department in departments %}
+                    <option value="{{ department[0] }}" {% if department[0] == department_filter %}selected{% endif %}>{{ department[0] }}</option>
+                    {% endfor %}
+                </select>
+            </form>
         
-        <button type="button" id="filter-button" class="btn-search">Filter</button>
+
         </div>
         <button id="import" class="add_new" onclick="document.getElementById('file-input').click();">Import</button>
         <form id="import-form" action="{{ url_for('my_blueprint.import_csv') }}" method="POST" enctype="multipart/form-data" style="display: none;">
@@ -33,7 +35,6 @@
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Day</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,9 +46,6 @@
                     <td>{{ course[3] }}</td>
                     <td>{{ course[4] }}</td>
                     <td>{{ course[5] }}</td>
-                    <td>
-                        <a href="" class="edit-button"><i class='bx bxs-pencil'></i></a>
-                    </td>
                 </tr>
                 {% else %}
                 <tr>

@@ -2963,7 +2963,8 @@ def edit_account():
 
 @bp.route('/export-schedule', methods=['GET'])
 def export_schedule():
-    department_id = request.args.get('department')
+    department = request.args.get('department')
+    filename = f"{department}_schedule.csv"
     
     # Fetch the data from the final_allocations table based on the selected department
     cur = g.mysql.connection.cursor()
@@ -2973,7 +2974,7 @@ def export_schedule():
         JOIN room_courses rc ON fa.course_id = rc.course_id
         JOIN classrooms cl ON fa.room_id = cl.room_id
         WHERE rc.department = %s
-    """, (department_id,))
+    """, (department,))
     allocations = cur.fetchall()
     cur.close()
 
@@ -2985,6 +2986,6 @@ def export_schedule():
         cw.writerow(allocation)
     
     output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=schedule.csv"
+    output.headers["Content-Disposition"] = f"attachment; filename={filename}"
     output.headers["Content-type"] = "text/csv"
     return output

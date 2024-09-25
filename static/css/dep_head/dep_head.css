@@ -129,20 +129,15 @@ body.sidebar-hidden .main-layout .sidebar{
     text-decoration: none;
     margin-bottom: 1rem;
     color: var(--background);
-    border-radius: 0.5rem;
     width: 85%;
     margin-top: 1rem;
 }
 .sidebar .link-section .link-item:hover{
-    background-color: white;
-    color: var(--second);
-    box-shadow: 5px 5px 10px rgb(0, 0, 0, 0.1);
+    border-left: 3px solid var(--background);
 }
 
 .link-section .link-item.active {
-    background-color: white;
-    color: var(--second);
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    border-left: 3px solid var(--background);
 }
 .sidebar .link-section .link-item i{
     font-size: 1.4rem;

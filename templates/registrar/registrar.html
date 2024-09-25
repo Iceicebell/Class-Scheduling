@@ -74,7 +74,7 @@
                         <div class="section-separator"></div>
 
                         <div class="link-section">
-                            <a href="{{ url_for('my_blueprint.edit_account') }}" class="link-item">
+                            <a href="{{ url_for('my_blueprint.edit_account') }}" class="link-item {% if current_endpoint == 'my_blueprint.edit_account' %}active{% endif %}">
                                 <i class='bx bxs-cog' ></i>Settings
                             </a>
                             <a href="/signout" class="link-item">

@@ -18,6 +18,6 @@ window.addEventListener("load", () => {
     if (flashMessage && flashMessage.textContent.includes('Algorithm completed successfully')) {
         setTimeout(() => {
             window.location.reload();
-        }, 1000); // Adjust the delay as needed
+        }, 500); // Adjust the delay as needed
     }
 });
