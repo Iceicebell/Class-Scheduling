@@ -81,12 +81,11 @@ td button:nth-child(3){
 }
 
 .table_section{
-    height: 500px;
     overflow: auto;
 }
 
 table{
-    width: 90%;
+    width: 100%;
     table-layout: fixed;
     min-width: 700px;
     border-collapse: collapse;

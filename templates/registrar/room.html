@@ -1,0 +1,251 @@
+
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_content.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/registrar/registrar_table.css') }}">
+</head>
+
+<body>
+    {% extends "registrar/registrar.html" %}
+    {% block content %}  
+    <span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button class="tab_btn active">1st Floor</button>
+            <button class="tab_btn">2nd Floor</button>
+            <button class="tab_btn">3rd Floor</button>
+            <button class="tab_btn">4th Floor</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                <div class="table">
+                    <div class="table_header">
+                        <p>1st Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room No.</th>
+                                    <th>Type</th>
+                                    <th>Capacity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms1 %}
+                                <tr>
+                                    <td>{{room[1]}}</td> <!-- Room No -->
+                                    <td>{{room[3]}}</td> <!-- Capacity -->
+                                    <td>{{room[2]}}</td> <!-- Type -->
+                                    <td>
+                                        <button class="edit-btn" data-room-id="{{room[0]}}"><i class='bx bxs-edit-alt'></i></button>
+                                        <button class="delete-btn" data-room-id="{{room[0]}}"><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %} 
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>2nd Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room No.</th>
+                                    <th>Type</th>
+                                    <th>Capacity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms2 %}
+                                <tr>
+                                    <td>{{room[1]}}</td> <!-- Room No -->
+                                    <td>{{room[3]}}</td> <!-- Capacity -->
+                                    <td>{{room[2]}}</td> <!-- Type -->
+                                    <td>
+                                        <button class="edit-btn" data-room-id="{{room[0]}}"><i class='bx bxs-edit-alt'></i></button>
+                                        <button class="delete-btn" data-room-id="{{room[0]}}"><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %} 
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>3rd Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room No.</th>
+                                    <th>Type</th>
+                                    <th>Capacity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms3 %}
+                                <tr>
+                                    <td>{{room[1]}}</td> <!-- Room No -->
+                                    <td>{{room[3]}}</td> <!-- Capacity -->
+                                    <td>{{room[2]}}</td> <!-- Type -->
+                                    <td>
+                                        <button class="edit-btn" data-room-id="{{room[0]}}"><i class='bx bxs-edit-alt'></i></button>
+                                        <button class="delete-btn" data-room-id="{{room[0]}}"><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %} 
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table">
+                    <div class="table_header">
+                        <p>4th Floor</p>
+                    </div>
+                    
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Room No.</th>
+                                    <th>Type</th>
+                                    <th>Capacity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for room in rooms4 %}
+                                <tr>
+                                    <td>{{room[1]}}</td> <!-- Room No -->
+                                    <td>{{room[3]}}</td> <!-- Capacity -->
+                                    <td>{{room[2]}}</td> <!-- Type -->
+                                    <td>
+                                        <button class="edit-btn" data-room-id="{{room[0]}}"><i class='bx bxs-edit-alt'></i></button>
+                                        <button class="delete-btn" data-room-id="{{room[0]}}"><i class='bx bxs-trash-alt' ></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %} 
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="popup">
+        <div class="close-btn">&times;</div>
+        <div class="form">
+            <form method="POST" action="{{ url_for('my_blueprint.add_room') }}">
+                {{ form.hidden_tag() }} 
+                <h2>Add Course</h2>
+                <div class="form-element">
+                    <label for="room_number">Room No</label>
+                    <input type="text" id="room_number" name="room_number" placeholder="Course Name" required>
+                </div>
+                <div class="form-element">
+                    <label for="capacity">Capacity</label>
+                    <input type="number" id="capacity" name="capacity" placeholder="Capacity" required>
+                </div>
+                <div class="form-element">
+                    <label for="type">Room Type</label>
+                    <div class="select-box">
+                    <select id="room_type" name="room_type">
+                        <option value="">-- Please select --</option>
+                        <option value="Lecture">Lecture</option>
+                        <option value="Networking">Networking</option>
+                        <option value="Comp Laboratory">Comp Laboratory</option>
+                        <option value="Engineering Laboratory">Engineering Laboratory</option>
+                    </select>
+                </div>
+                </div>
+
+                <div class="form-element">
+                    <label for="floor_level">Floor Level</label>
+                    <div class="select-box">
+                    <select id="floor_level" name="floor_level">
+                        <option value="">-- Please select --</option>
+                        <option value="1">1st floor</option>
+                        <option value="2">2nd floor</option>
+                        <option value="3">3rd floor</option>
+                        <option value="4">4th floor</option>
+                    </select>
+                    </div>
+                </div>
+                 <!-- Automatically includes the CSRF token -->
+                 <div class="form-element">
+                <button type="submit">Add Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
+</span>
+
+
+
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Edit button functionality
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const roomId = this.getAttribute('data-room-id');
+                window.location.href = `/edit-room/${roomId}`;
+            });
+        });
+
+        // Delete button functionality
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const roomId = this.getAttribute('data-room-id');
+                if (confirm('Are you sure you want to delete this room?')) {
+                    // Send a DELETE request to your Flask route
+                    fetch(`/delete-room/${roomId}`, { method: 'DELETE' })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Remove the row from the table
+                                this.closest('tr').remove();
+                                alert('Room deleted successfully!');
+                            } else {
+                                alert('Failed to delete room.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while deleting the room.');
+                        });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

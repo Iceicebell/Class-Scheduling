@@ -1,0 +1,165 @@
+<link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_content.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_table.css') }}">
+{% extends "genEd/genEd.html" %}
+{% block content %}
+
+<form id="generateForm" method="POST" onsubmit="return confirm('Are you sure you want to apply the generated schedule? This will remove all existing data from the created schedules.')">
+    <div class="coolinput">
+        <button id="generate-button" class="generate" type="submit">Apply Generated Schedule</button>
+        <button id="export-button" class="generate" type="button">Export CSV</button>
+    </div>
+</form>
+
+<span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button id="course-timetable-btn" class="tab_btn active" type="button">Course Timetable</button>
+            <button id="faculties-timetable-btn" class="tab_btn" type="button">Faculties Timetable</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                {% if student_schedule %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>General Educations Subjects</p>
+                    </div>
+                    <div class="table_section">
+            
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <th>{{ day }}</th>
+                                    {% endfor %}
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course_key, course_info in student_schedule.items() %}
+                                <tr>
+                                    <td>{{ course_key }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_info %}
+                                                {% for time_slot in course_info[day] %}
+                                                    {{ time_slot.start_hour }}-{{ time_slot.end_hour }}
+                                                    <br>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                        
+                                    {% endfor %}
+                                    <td>
+                                        <a href="{{ url_for('my_blueprint.edit_gened_schedule', course_code=course_key.split('/')[0], course_block=course_key.split('/')[1]) }}" class="btn btn-primary"><i class='bx bxs-edit-alt'></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                
+                    </div>
+                </div>
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>General Education Courses</p>
+                    </div>
+                    <div class="table_section">
+            
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Course Code/ Block</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                    </tr>
+                                </thead>
+
+                        </table>
+                
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="content">
+                {% if faculty_timetable %}
+                {% for full_name, faculty_data in faculty_timetable.items() %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>{{ full_name }}</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <th>{{ day }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course_key, course_info in faculty_data.courses.items() %}
+                                <tr>
+                                    <td>{{ course_key }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_info %}
+                                                {{ course_info[day]['start_hour'] }}-{{ course_info[day]['end_hour'] }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>Faculties</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="7">No timetable available.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</span>
+<script>
+    document.getElementById('export-button').addEventListener('click', function() {
+        window.location.href = "{{ url_for('my_blueprint.gened_export_csv') }}";
+    });
+</script>
+<script src="{{ url_for('static', filename='js/scripts/genEd/genEd.js') }}"></script>
+{% endblock %}

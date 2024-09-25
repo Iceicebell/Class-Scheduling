@@ -1,9 +1,4 @@
 
-
-
-
-
-
     <head>
         <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -15,7 +10,7 @@
         {% extends "dep_head/dep_head.html" %}
         {% block content %}  
         <span class="body">
-        <div class="container1">
+        <div class="container2">
             <div class="tab_box">
                 <button class="tab_btn active">1st Year</button>
                 <button class="tab_btn">2nd Year</button>
@@ -31,7 +26,7 @@
                             <p>1st Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -40,6 +35,7 @@
                                         <th>Block</th>
                                         <th>Type</th>
                                         <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -47,15 +43,17 @@
                                 <tbody>
                                     {% for course in courses1 %}
                                     <tr>
-                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        
                                         <td>{{ course[1] }}</td> <!-- Course Name -->
                                         <td>{{ course[2] }}</td> <!-- Block -->
                                         <td>{{ course[3] }}</td> <!-- Type -->
                                         <td>{{ course[4] }}</td> <!-- Units -->
-                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[5] }}</td> <!-- hours per week -->
+                                        <td>{{ course[6] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[7] }}</td> <!-- Course Code -->
                                         <td>
-                                            <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
-                                            <button><i class='bx bxs-trash-alt' ></i></button>
+                                            <button class="edit-btn" data-course-id="{{ course[0] }}">Edit</button>
+                                            <button class="delete-btn" data-course-id="{{ course[0] }}">Delete</button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -71,7 +69,7 @@
                             <p>2nd Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -80,6 +78,7 @@
                                         <th>Block</th>
                                         <th>Type</th>
                                         <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -87,15 +86,17 @@
                                 <tbody>
                                     {% for course in courses2 %}
                                     <tr>
-                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        
                                         <td>{{ course[1] }}</td> <!-- Course Name -->
                                         <td>{{ course[2] }}</td> <!-- Block -->
                                         <td>{{ course[3] }}</td> <!-- Type -->
                                         <td>{{ course[4] }}</td> <!-- Units -->
-                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[5] }}</td> <!-- hours per week -->
+                                        <td>{{ course[6] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[7] }}</td> <!-- Course Code -->
                                         <td>
-                                            <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
-                                            <button><i class='bx bxs-trash-alt' ></i></button>
+                                            <button class="edit-btn" data-course-id="{{ course[0] }}">Edit</button>
+                                            <button class="delete-btn" data-course-id="{{ course[0] }}">Delete</button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -111,7 +112,7 @@
                             <p>3rd Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -120,6 +121,7 @@
                                         <th>Block</th>
                                         <th>Type</th>
                                         <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -127,15 +129,17 @@
                                 <tbody>
                                     {% for course in courses3 %}
                                     <tr>
-                                        <td>{{ course[0] }}</td> <!-- Course Code -->
+                                        
                                         <td>{{ course[1] }}</td> <!-- Course Name -->
                                         <td>{{ course[2] }}</td> <!-- Block -->
                                         <td>{{ course[3] }}</td> <!-- Type -->
                                         <td>{{ course[4] }}</td> <!-- Units -->
-                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[5] }}</td> <!-- hours per week -->
+                                        <td>{{ course[6] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[7] }}</td> <!-- Course Code -->
                                         <td>
-                                            <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
-                                            <button><i class='bx bxs-trash-alt' ></i></button>
+                                            <button class="edit-btn" data-course-id="{{ course[0] }}">Edit</button>
+                                            <button class="delete-btn" data-course-id="{{ course[0] }}">Delete</button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -151,7 +155,7 @@
                             <p>4th Year Courses</p>
                         </div>
                         
-                        <div class="table-section">
+                        <div class="table_section">
                             <table>
                                 <thead>
                                     <tr>
@@ -160,6 +164,7 @@
                                         <th>Block</th>
                                         <th>Type</th>
                                         <th>Units</th>
+                                        <th>HPW</th>
                                         <th>Faculty</th>
                                         <th>Action</th>
                                     </tr>
@@ -167,15 +172,16 @@
                                 <tbody>
                                     {% for course in courses4 %}
                                     <tr>
-                                        <td>{{ course[0] }}</td> <!-- Course Code -->
                                         <td>{{ course[1] }}</td> <!-- Course Name -->
                                         <td>{{ course[2] }}</td> <!-- Block -->
                                         <td>{{ course[3] }}</td> <!-- Type -->
                                         <td>{{ course[4] }}</td> <!-- Units -->
-                                        <td>{{ course[5] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[5] }}</td> <!-- hours per week -->
+                                        <td>{{ course[6] }}</td> <!-- Faculty Name -->
+                                        <td>{{ course[7] }}</td> <!-- Course Code -->
                                         <td>
-                                            <button id="show-edit"><i class='bx bxs-edit-alt'></i></button>
-                                            <button><i class='bx bxs-trash-alt' ></i></button>
+                                            <button class="edit-btn" data-course-id="{{ course[0] }}">Edit</button>
+                                            <button class="delete-btn" data-course-id="{{ course[0] }}">Delete</button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -201,8 +207,12 @@
                         <input type="text" id="course_name" name="course_name" placeholder="Course Name" required>
                     </div>
                     <div class="form-element">
-                        <label for="units">Units</label>
-                        <input type="text" id="units" name="units" placeholder="Number of hours per week" required>
+                        <label for="units">units</label>
+                        <input type="number" id="units" name="units" placeholder="Units" required>
+                    </div>
+                    <div class="form-element">
+                        <label for="hours_per_week">hours_per_week</label>
+                        <input type="number" id="hours_per_week" name="hours_per_week" placeholder="Number of hours per week" required>
                     </div>
                     <div class="form-element">
                         <label for="block">Block</label>
@@ -214,9 +224,10 @@
                         <div class="select-box">
                         <select id="course_type" name="course_type">
                             <option value="">-- Please select --</option>
-                            <option value="lecture">Lecture</option>
-                            <option value="comp_lab">Comp Laboratory</option>
-                            <option value="eng_lab">Engineering Laboratory</option>
+                            <option value="Lecture">Lecture</option>
+                            <option value="Comp Laboratory">Comp Laboratory</option>
+                            <option value="Networking">Networking</option>
+                            <option value="Engineering Laboratory">Engineering Laboratory</option>
                         </select>
                     </div>
                     </div>
@@ -247,13 +258,51 @@
                     </div>
                      <!-- Automatically includes the CSRF token -->
                      <div class="form-element">
-                    <button type="submit">Add Program</button>
+                    <button type="submit">Add Course</button>
                     </div>
                 </form>
             </div>
         </div>
         <button id="show-add" class="add"><i class='bx bx-plus-circle'></i></button>
     </span>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit button functionality
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const courseId = this.getAttribute('data-course-id');
+                    window.location.href = `/edit-course/${courseId}`;
+                });
+            });
+    
+            // Delete button functionality
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const courseId = this.getAttribute('data-course-id');
+                    if (confirm('Are you sure you want to delete this course?')) {
+                        // Send a DELETE request to your Flask route
+                        fetch(`/delete-course/${courseId}`, { method: 'DELETE' })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Remove the row from the table
+                                    this.closest('tr').remove();
+                                    alert('Course deleted successfully!');
+                                } else {
+                                    alert('Failed to delete course.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred while deleting the course.');
+                            });
+                    }
+                });
+            });
+        });
+    </script>
     {% endblock %}
     <script src="{{ url_for('static', filename='js/scripts/dep_head/dep_head.js') }}"></script>
     </body>

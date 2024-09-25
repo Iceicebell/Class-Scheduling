@@ -1,6 +1,190 @@
-{% extends "dep_head/dep_head.html" %}
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/generate_table.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/loading.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dep_head/generate2.css') }}">
+</head>
 
+{% extends "dep_head/dep_head.html" %}
 {% block content %}
-    <h1>Subjects Page Content</h1>
-    <p>This is the create schedule page.</p>
+<form id="generateForm" method="POST" onsubmit="return confirm('Are you sure you want to apply the generated schedule? This will remove all existing data from the created schedules.')">
+    <div class="coolinput">
+        <button id="generate-button" class="generate" type="submit">Apply Generated Schedule</button>
+        <button id="export-button" class="generate" type="button">Export CSV</button>
+    </div>
+</form>
+<span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button id="course-timetable-btn" class="tab_btn active" type="button">Course Timetable</button>
+            <button id="faculties-timetable-btn" class="tab_btn" type="button">Faculties Timetable</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                {% if schedule %}
+                {% for section_name, section_data in schedule.items() %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>Section {{ section_name }}</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Unavailable</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in section_data['unavailable'] %}
+                                                {% for slot in section_data['unavailable'][day] %}
+                                                {{ slot['start_hour'] }}-{{ slot['end_hour'] }}
+                                                {% if not loop.last %}<br><br>{% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                            <tbody>
+                                {% for course_code_block, course_schedule in section_data['courses'].items() %}
+                                {% set course_code, course_block = course_code_block.split('/') %}
+                                <tr>
+                                    <td>{{ course_code_block }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_schedule %}
+                                            {{ course_schedule[day]['start_hour'] }}-{{ course_schedule[day]['end_hour'] }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td>
+                                        <a href="{{ url_for('my_blueprint.edit_schedule', course_code=course_code, course_block=course_block) }}" class="btn btn-primary"><i class='bx bxs-edit-alt'></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>Sections</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="content">
+                {% if faculty_timetable %}
+                {% for faculty_name, faculty_data in faculty_timetable.items() %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>{{ faculty_name }}</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course_code_block, course_schedule in faculty_data['courses'].items() %}
+                                <tr>
+                                    <td>{{ course_code_block }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_schedule %}
+                                            {{ course_schedule[day]['start_hour'] }}-{{ course_schedule[day]['end_hour'] }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>Sections</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</span>
+
+<script>
+    document.getElementById('export-button').addEventListener('click', function() {
+        window.location.href = "{{ url_for('my_blueprint.export_csv') }}";
+    });
+</script>
+<script src="{{ url_for('static', filename='js/scripts/dep_head/generate.js') }}"></script>
 {% endblock %}

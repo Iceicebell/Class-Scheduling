@@ -18,13 +18,12 @@
                     <img src="{{ url_for('static', filename='img/clock.png') }}" alt="Logo" class="form-image clock">
                     <img src="{{ url_for('static', filename='img/building.png') }}" alt="Logo" class="form-image building">
                 </div>
-                <p class="featured-words">You Are Few Minutes Way to Speed Up Your Task With <span>Vinci.ent</span></p>
+                <p class="featured-words">You Are Few Minutes Way to Speed Up Your Task With <span>DateTator</span></p>
             </div>
 
             <div class="col col-2">
                 <div class="btn-box">
                     <button class="btn btn-1" id="login">Sign In</button>
-                    <a href="/signup/dept-head"><button class="btn btn-2" id="register">Sign Up</button></a>
                 </div>
 
                 <!-- LOGIN FORM CONTAINER -->
@@ -75,7 +74,7 @@
                         </div>
                         
                         <div class="input-box">
-                            {{ form.submit(class="input-submit", id="submit") }}
+                            {{ form.submit(class="input-submit", id="Login") }}
                             <script>
                                 document.getElementById('submit').innerHTML = '<span>Create Account</span><i class="bx bx-right-arrow-alt"></i>';
                             </script>

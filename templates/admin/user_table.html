@@ -1,0 +1,104 @@
+{% extends "admin/admin.html" %}
+
+{% block content %}
+<div class="table">
+    <div class="table_header">
+        <p>Accounts</p>
+    </div>
+    
+    <div class="table-section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Email</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Verified</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user[0] }}</td>
+                    <td>{{ user[1] }}</td>
+                    <td>{{ user[2] }}</td>
+                    <td>{{ user[3] }}</td>
+                    <td>{{ user[4] }}</td>
+                    <td class="{% if user[5] == 0 %}not-verified{% endif %}">
+                        {% if user[5] == 1 %}
+                            Verified
+                        {% else %}
+                            DISABLED
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('my_blueprint.edit_user', user_id=user[0]) }}" class="edit-button"><i class='bx bxs-pencil'></i></a>
+                        {% if user[5] == 1 %}
+                            <a href="javascript:void(0);" onclick="confirmDisableUser('{{ user[0] }}')" class="disable-button">
+                                <i class='bx bx-minus-circle'></i>
+                            </a>
+                        {% else %}
+                            <a href="javascript:void(0);" onclick="confirmEnableUser('{{ user[0] }}')" class="enable-button">
+                                <i class='bx bx-lock-open'></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+function confirmDisableUser(userId) {
+    if (confirm("Are you sure you want to disable this user?")) {
+        fetch('/disable-user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User disabled successfully!');
+                location.reload();
+            } else {
+                alert('Failed to disable user. Please try again.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+
+function confirmEnableUser(userId) {
+    if (confirm("Are you sure you want to enable this account?")) {
+        fetch('/enable-user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Account enabled successfully!');
+                location.reload();
+            } else {
+                alert('Failed to enable account. Please try again.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+}
+    </script>
+{% endblock %}

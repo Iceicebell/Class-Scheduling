@@ -1,19 +1,21 @@
-
-
 {% extends "signup.html" %}
 
-{% block button1 %}<a href="/signup/dept-head"><button class="btn btn-1" id="login">Department Head</button></a>{% endblock %}
-
-{% block button2 %}<a href="/signup/registrar"><button class="btn btn-2" id="register">Registrar</button></a>{% endblock %}
-
+{% block button1 %}<a href="/signup/dept-head"><button class="btn btn-1" id="login">Add Account</button></a>{% endblock %}
 
 {% block content %}
-
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
 <form method="POST" id="dept_head-form">
     <div class="login-form">
        <div class="form-title1">
-           <span>Department Head</span>
        </div>
        {{ dept_head_form.hidden_tag() }}
        <div class="form-inputs">
@@ -21,10 +23,10 @@
                {{dept_head_form.email(id='email', class="input-field", placeholder="Email")}}
                <i class="bx bx-envelope icon"></i>
 
-               {%if dept_head_form.email.errors %}
+               {% if dept_head_form.email.errors %}
                    <ul>
-                       {%for error in dept_head_form.email.errors %}
-                           <li class="error">{{error}}</li>
+                       {% for error in dept_head_form.email.errors %}
+                           <li class="error">{{ error }}</li>
                        {% endfor %}
                    </ul>
                {% endif %}
@@ -33,10 +35,10 @@
                {{dept_head_form.username(id='username', class="input-field", placeholder="Username")}}
                <i class="bx bx-user icon"></i>
 
-               {%if dept_head_form.username.errors %}
+               {% if dept_head_form.username.errors %}
                    <ul>
-                       {%for error in dept_head_form.username.errors %}
-                           <li class="error">{{error}}</li>
+                       {% for error in dept_head_form.username.errors %}
+                           <li class="error">{{ error }}</li>
                        {% endfor %}
                    </ul>
                {% endif %}
@@ -45,10 +47,10 @@
                {{dept_head_form.password(id='password', class="input-field", placeholder="Password")}}
                <i class="bx bx-lock-alt icon"></i>
 
-               {%if dept_head_form.password.errors %}
+               {% if dept_head_form.password.errors %}
                    <ul>
-                       {%for error in dept_head_form.password.errors %}
-                           <li class="error">{{error}}</li>
+                       {% for error in dept_head_form.password.errors %}
+                           <li class="error">{{ error }}</li>
                        {% endfor %}
                    </ul>
                {% endif %}
@@ -57,15 +59,30 @@
                {{dept_head_form.confirmPassword(id='confirmPassword', class="input-field", placeholder="Confirm Password")}}
                <i class="bx bx-lock-alt icon"></i>
 
-               {%if dept_head_form.confirmPassword.errors %}
+               {% if dept_head_form.confirmPassword.errors %}
                    <ul>
-                       {%for error in dept_head_form.confirmPassword.errors %}
-                           <li class="error">{{error}}</li>
+                       {% for error in dept_head_form.confirmPassword.errors %}
+                           <li class="error">{{ error }}</li>
                        {% endfor %}
                    </ul>
                {% endif %}
            </div>
 
+           <div class="select-box">
+            <select id="role" name="role">
+                {% for value, label in dept_head_form.role.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            {% if dept_head_form.role.errors %}
+            <ul>
+                {% for error in dept_head_form.role.errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        </div>
 
                <div class="select-box">
                    <select id="department" name="department">
@@ -90,10 +107,10 @@
                </script>
            </div>
            <div class="forgot-pass">
-            <a href="/signin">Already have an account?</a>
+            <a href="/admin">Accounts</a>
         </div>
        </div>
     </div>
-   </form>
+</form>
 
 {% endblock %}

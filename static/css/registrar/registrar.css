@@ -5,7 +5,6 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Popppins', sans-serif;
-    background-color: #fff;
 }
 
 :root{
@@ -15,7 +14,7 @@
     --background: rgb(59, 112, 151);
 }
 
-.navbar{
+.navbar1{
     display: flex;
     gap: 2rem;
     align-items: center;
@@ -23,22 +22,22 @@
     justify-content: space-between;
 }
 
-.container :where(.nav-section, .search-form, .nav-logo){
+.container1 :where(.nav-section, .search-form, .nav-logo){
     display: flex;
     align-items: center;
 }
 
-.container .nav-section{
+.container1 .nav-section{
     gap: 1rem;
 }
 
-.container :where(.logo-image, .class-image){
+.container1 :where(.logo-image, .class-image){
     width: 50px;
     cursor: pointer;
     border-radius: 50%;
 }
 
-.container .nav-button{
+.container1 .nav-button{
     border: none;
     cursor: pointer;
     height: 40px;
@@ -47,42 +46,42 @@
     background-color: none;
 }
 
-.container .nav-button i{
+.container1 .nav-button i{
     font-size: 1.5rem;
     align-items: center;
     justify-content: center;
 }
 
-.container .nav-button:hover{
+.container1 .nav-button:hover{
     background-color: var(--background);
 }
-.container .nav-button:hover i{
+.container1 .nav-button:hover i{
     background-color: var(--background);
 }
-.container .nav-logo{
+.container1 .nav-logo{
     display: flex;
     gap: 0.5rem;
     text-decoration: none;
 }
 
-.container .nav-logo .logo-text{
+.container1 .nav-logo .logo-text{
     font-size: 1.25rem;
     color: var(--background);
 }
 
-.navbar .nav-center{
+.navbar1 .nav-center{
     display: flex;
     width: 100%;
     justify-content: center
 }
 
-.navbar .search-form{
+.navbar1 .search-form{
     max-width: 550px;
     flex: 1;
     height: 40px;
 }
 
-.navbar .search-form .center-text{
+.navbar1 .search-form .center-text{
     width: 100%;
     height: 100%;
     padding: 0 1 rem;
@@ -96,6 +95,7 @@
     width: 320px;
     padding: 0 0.7rem;
     background-color: white;
+    height: 100%;
 }
 
 body.sidebar-hidden .main-layout .sidebar{
@@ -108,14 +108,14 @@ body.sidebar-hidden .main-layout .sidebar{
     padding: 0.5rem 0.3rem;
 }
 
-.sidebar .link-container{
+.sidebar .link-container1{
     overflow-y: auto;
     height: calc(100vh - 60px);
 }
 
 .sidebar .section-separator{
     height: 1px;
-    margin-top: 15%;
+    margin-top: 10%;
     background-color: var(--background);
 }
 
@@ -129,27 +129,22 @@ body.sidebar-hidden .main-layout .sidebar{
     text-decoration: none;
     margin-bottom: 1rem;
     color: var(--background);
-    border-radius: 0.5rem;
-    width: 80%;
+    width: 85%;
     margin-top: 1rem;
 }
 .sidebar .link-section .link-item:hover{
-    background-color: white;
-    color: var(--second);
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    border-left: 3px solid var(--background);
 }
-.sidebar .link-section .link-item i{
-    font-size: 1.4rem;
-    margin-right: 0.63rem;
-    background-color: white;
-    padding: .5rem;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
-    border-radius: 7px;
+
+.link-section .link-item.active {
+    border-left: 3px solid var(--background);
+}
+.link-section .link-item.active {
+    border-left: 3px solid var(--background);
 }
 .sidebar .link-section .link-item:hover i {
     background-color: var(--background);
-    color: white;
-    box-shadow: 5px 5px 15px rgb(0, 0, 0, 0.2);
+    color: white;       
 }
 .main-layout .content-wrapper{
     padding: 0 1 rem;

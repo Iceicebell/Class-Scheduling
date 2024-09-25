@@ -73,7 +73,6 @@ td button:nth-child(2){
 }
 
 .table_section{
-    height: 500px;
     overflow: auto;
 }
 
@@ -89,7 +88,7 @@ thead th{
     position: sticky;
     top: 0;
     color: gray;
-    font-size: 15px;
+    
 }
 
 th,td{
@@ -97,6 +96,7 @@ th,td{
     padding: 10px 20px;
     word-break: break-all;
     text-align: center;
+    font-size: 12;
 }
 
 tr:hover td{

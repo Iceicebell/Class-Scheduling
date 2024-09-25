@@ -1,11 +1,9 @@
 const menuButton = document.querySelectorAll(".menu-button");
 const screenOverlay = document.querySelector(".screen-overlay");
-const optionMenu = document.querySelector(".select-menu"),
-    selectBtn = document.querySelector(".select-btn"),
-    options = document.querySelectorAll(".option"),
-    sBtn_text = document.querySelector(".sBtn-text ");
-const showEdit = document.querySelector("#show-edit");
-const closeEdit = document.querySelector(".popup .close-btn");
+const tabs = document.querySelectorAll('.tab_btn');
+const all_content = document.querySelectorAll('.content');
+const showAdd = document.querySelector("#show-add");
+const closeAdd = document.querySelector(".popup .close-btn");
 
 
 menuButton.forEach(button =>{
@@ -18,22 +16,31 @@ screenOverlay.addEventListener("click", ()=>{
     document.body.classList.toggle("sidebar-hidden");
 });
 
-selectBtn.addEventListener("click", () => optionMenu.classList.toggle("active"));
 
-options.forEach(option =>{
-    option.addEventListener("click", ()=>{
-        let selectedOption = option.querySelector(".option-text").innerText;
-        sBtn_text.innerText = selectedOption;
-        
+tabs.forEach((tab,index) => {
+    tab.addEventListener('click',(e)=>{
+        tabs.forEach(tab=>{tab.classList.remove('active')});
+        tab.classList.add('active');
 
-        optionMenu.classList.remove("active")
-    })
-})
+        var line = document.querySelector('.line');
+        line.style.width = e.target.offsetWidth + 'px';
+        line.style.left = e.target.offsetLeft + 'px';
 
-showEdit.addEventListener("click", function(){
+        all_content.forEach(content=>{content.classList.remove('active')});
+        all_content[index].classList.add('active');
+    });
+
+
+});
+
+// =====================POP UP==================
+
+showAdd.addEventListener("click", function(){
     document.querySelector(".popup").classList.add("active");
 });
 
-closeEdit.addEventListener("click", function(){
+closeAdd.addEventListener("click", function(){
     document.querySelector(".popup").classList.remove("active");
 });
+
+// ===================OPTIONS================

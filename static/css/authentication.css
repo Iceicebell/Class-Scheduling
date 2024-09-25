@@ -195,7 +195,7 @@ body{
     height: 45px;
     padding: 0 15px;
     margin: 10px 0;
-    color: #a2e2f8;
+    color: var(--background);
     background: rgb(59, 112, 151, 0.2);
     border:none;
     border-radius: 10px;
@@ -236,6 +236,7 @@ body{
     justify-content: right;
     gap: 5px;
     padding: 10px;
+    color: var(--second);
 }
 .forgot-pass a{
     color: var(--second)culty;
@@ -270,6 +271,29 @@ body{
     text-decoration: none;
     font-size: 15px;
     color: red;
+}
+.alert {
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
 }
 
 /* ===== RESPOSIVE ===== */

@@ -1,0 +1,164 @@
+<link rel="icon" href="{{ url_for('static', filename='img/scheduler_logo.png') }}">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_content.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genEd/genEd_table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loading.css') }}">
+{% extends "genEd/genEd.html" %}
+    {% block content %}
+    
+<!-- <div class="loader"></div> -->
+<div class="loader" id="loader" style="display: none;"></div>
+<form id="generateForm" method="POST">
+    {{ form.hidden_tag() }}
+    <div class="coolinput">
+        <label for="population_size" class="text">Population</label>
+        <input type="number" placeholder="Type here..." name="population_size" class="input" value="{{ form.population_size.data }}">
+        
+        <label for="max_generations" class="text">Generations</label>
+        <input type="number" placeholder="Type here..." name="max_generations" class="input" value="{{ form.max_generations.data }}">
+        <button id="generate-button" class="generate" type="submit">Generate</button>
+    </div>
+</form>
+
+<span class="body">
+    <div class="container2">
+        <div class="tab_box">
+            <button id="course-timetable-btn" class="tab_btn active" type="button">Course Timetable</button>
+            <button id="faculties-timetable-btn" class="tab_btn" type="button">Faculties Timetable</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="content_box">
+            <div class="content active">
+                {% if student_schedule %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>General Educations Subjects</p>
+                    </div>
+                    <div class="table_section">
+            
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <th>{{ day }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course_key, course_info in student_schedule.items() %}
+                                <tr>
+                                    <td>{{ course_key }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_info %}
+                                                {% for time_slot in course_info[day] %}
+                                                    {{ time_slot.start_hour }}-{{ time_slot.end_hour }}
+                                                    <br>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                
+                    </div>
+                </div>
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>General Education Courses</p>
+                    </div>
+                    <div class="table_section">
+            
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Course Code/ Block</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                    </tr>
+                                </thead>
+
+                        </table>
+                
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="content">
+                {% if faculty_timetable %}
+                {% for full_name, faculty_data in faculty_timetable.items() %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>{{ full_name }}</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <th>{{ day }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course_key, course_info in faculty_data.courses.items() %}
+                                <tr>
+                                    <td>{{ course_key }}</td>
+                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        <td>
+                                            {% if day in course_info %}
+                                                {{ course_info[day]['start_hour'] }}-{{ course_info[day]['end_hour'] }}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="table">
+                    <div class="table_header">
+                        <p>Faculties</p>
+                    </div>
+                    <div class="table_section">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course Code/ Block</th>
+                                    <th>Monday</th>
+                                    <th>Tuesday</th>
+                                    <th>Wednesday</th>
+                                    <th>Thursday</th>
+                                    <th>Friday</th>
+                                    <th>Saturday</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="7">No timetable available.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</span>
+<script src="{{ url_for('static', filename='js/scripts/loading.js') }}"></script>
+<script src="{{ url_for('static', filename='js/scripts/genEd/genEd.js') }}"></script>
+    {% endblock %}
