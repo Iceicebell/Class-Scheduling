@@ -33,9 +33,9 @@ bp = Blueprint('algorithm', __name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-POPULATION_SIZE = 5
-MAX_GENERATIONS = 5
-MUTATION_RATE = 0.1
+POPULATION_SIZE = 200
+MAX_GENERATIONS = 100
+MUTATION_RATE = 0.01
     
 class Solution:
     faculty_cache = {}
@@ -49,65 +49,49 @@ class Solution:
             self.schedule[section_id] = []
         
         duration_decimal = Decimal(duration)
-        # print(f"Original duration_decimal for course {course_id}: {duration_decimal}")  # Debugging line
-        
         hours_per_week = self.get_course_hours_per_week(cursor, course_id)
-        # print(f"Units for course {course_id}: {units}")  # Debugging line
-        
 
         if start_hour + duration_decimal > 13 and start_hour < 12:
             start_hour = 13
         elif start_hour + duration_decimal > 20:
             start_hour = 20 - duration_decimal  
 
-
         start_hour = max(7, start_hour)
-
         
         max_duration = min(12 - start_hour, duration_decimal) if start_hour < 12 else duration_decimal 
         if start_hour >= 12:
             max_duration = min(20 - start_hour, duration_decimal)  
-        
 
         if hours_per_week >= 2:
-
             if day in ['Monday', 'Tuesday', 'Thursday']:
                 days = [day, self.get_pair_day(day)]
             else:
-
                 days = [day, self.get_pair_day(day)]
-            split_duration_decimal = hours_per_week / Decimal(2)  # Use Decimal for precise division
-            # print(f"Split duration_decimal for course {course_id}: {split_duration_decimal}")  # Debugging line
+            split_duration_decimal = hours_per_week / Decimal(2)
         else:
             days = [day] 
             split_duration_decimal = duration_decimal
-            # print(f"Duration_decimal for course {course_id} (not split): {split_duration_decimal}")  # Debugging line
         
         for d in days:
-
             max_duration = min(12 - start_hour, split_duration_decimal) if start_hour < 12 else split_duration_decimal
             if start_hour >= 12:
                 max_duration = min(20 - start_hour, split_duration_decimal)
-            # print(f"Final max_duration for course {course_id} on day {d}: {max_duration}")
 
-
-            existing_assignments = [(cid, day, sh) for cid, day, sh, _, _, _ in self.schedule[section_id]]
-            if (course_id, d, start_hour) not in existing_assignments:
+            if self.is_slot_available(section_id, d, start_hour, max_duration):
                 self.schedule[section_id].append((course_id, d, start_hour, max_duration, course_code, course_block))
-                # print(f"Added course {course_id} on {d} at {start_hour} with max_duration {max_duration}")
             else:
+                # print(f"Slot not available for course {course_id} on {d} at {start_hour}")
                 pass
-                # print(f"Skipping duplicate course {course_id} on {d} at {start_hour}")
 
         self.fitness_score = None
 
 
     def fetch_unavailable_times(self, cursor, section_id):
         """Fetches unavailable times for a section and adds them to the schedule as if they were courses."""
-        query = "SELECT day_of_week, start_time, end_time FROM unavailable_times WHERE section_id = %s"
+        query = "SELECT day_of_week, start_time, end_time, course_code, block FROM unavailable_times WHERE section_id = %s"
         cursor.execute(query, (section_id,))
         unavailable_periods = cursor.fetchall()
-        for day, start_time, end_time in unavailable_periods:
+        for day, start_time, end_time, course_code, block in unavailable_periods:
 
             day = self.convert_day_format(day)
 
@@ -115,7 +99,7 @@ class Solution:
 
             duration = end_time - start_time
 
-            self.add_course_assignment(section_id, pseudo_course_id, day, start_time, duration, "Unavailable", "None", cursor)
+            self.add_course_assignment(section_id, pseudo_course_id, day, start_time, duration, course_code, block, cursor)
 
     def convert_day_format(self, day_of_week):
         """Converts the day format from the database to the format used in your schedule."""
@@ -137,7 +121,7 @@ class Solution:
         available_slots = []
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
         for day in days:
-            for start_hour in range(7, 20):  # Assuming 7 AM to 8 PM
+            for start_hour in range(7, 20): 
                 if self.is_slot_available(section_id, day, start_hour, duration):
                     available_slots.append((day, start_hour))
         return available_slots
@@ -234,16 +218,16 @@ class Solution:
                         end_time1 = start_hour1 + duration1
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1: 
-                            conflicts_penalty += 1000 
+                            conflicts_penalty += 4000 
                         
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         
 
                         if faculty_id1 == faculty_id2 and (course_code1 != course_code2 or course_block1 != course_block2):
-                            conflicts_penalty += 1000 
+                            conflicts_penalty += 3000 
 
-        # Penalty for disregarding lunch breaks
+
         for section_id, assignments in self.schedule.items():
             for course_id, day, start_hour, duration, course_code, course_block in assignments:
                 if 12 <= start_hour < 13 and start_hour + duration > 13: 
@@ -258,7 +242,7 @@ class Solution:
                     course_code_block_groups[key] = []
                 course_code_block_groups[key].append((course_id, day, start_hour, duration))
                 if len(course_code_block_groups[key]) > 1: 
-                    integrity_reward += 2000 
+                    integrity_reward += 1000 
 
 
         for section_id, assignments in self.schedule.items():
@@ -598,8 +582,6 @@ def get_best_solution():
     return run_genetic_algorithm(initial_solution)
 
 class GenerateForm(FlaskForm):
-    population_size = IntegerField('Population Size', default=50)
-    max_generations = IntegerField('Max Generations', default=100)
     submit = SubmitField('Generate Schedule')
 def generate_faculty_timetable(cursor, current_user_id):
     faculty_timetable = {}
@@ -667,30 +649,25 @@ def generate():
     for user_id, section_id, course_id, day, start_hour, duration, course_code, course_block in saved_solutions:
         section_name = section_names.get(section_id, f"Section {section_id}")
         if section_name not in display_schedule:
-            display_schedule[section_name] = {'courses': {}, 'unavailable': {}}
+            display_schedule[section_name] = {'courses': {}}
             
-        if course_id == -1:  # Unavailable time
-            if day not in display_schedule[section_name]['unavailable']:
-                display_schedule[section_name]['unavailable'][day] = []
-            display_schedule[section_name]['unavailable'][day].append({
-                    'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
-                    'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
-                })
-        else:  # Regular course
-            course_key = f"{course_code}/{course_block}"
-            if course_key not in display_schedule[section_name]['courses']:
-                display_schedule[section_name]['courses'][course_key] = {}
-            display_schedule[section_name]['courses'][course_key][day] = {
-                    'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
-                    'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
-                }
+        course_key = f"{course_code}/{course_block}"
+        if course_key not in display_schedule[section_name]['courses']:
+            display_schedule[section_name]['courses'][course_key] = {}
+        if day not in display_schedule[section_name]['courses'][course_key]:
+            display_schedule[section_name]['courses'][course_key][day] = []
+        
+        display_schedule[section_name]['courses'][course_key][day].append({
+            'start_hour': f"{int(start_hour)}:{int((start_hour % 1) * 60):02d}",
+            'end_hour': f"{int(start_hour + duration)}:{int(((start_hour + duration) % 1) * 60):02d}"
+        })
+
+        
     form =  GenerateForm()
     faculty_timetable = None 
     if request.method == 'POST':
         if form.validate_on_submit():
             global POPULATION_SIZE, MAX_GENERATIONS
-            POPULATION_SIZE = form.population_size.data
-            MAX_GENERATIONS = form.max_generations.data
 
 
             profiler = cProfile.Profile()

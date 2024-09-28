@@ -11,11 +11,6 @@
 <form id="generateForm" method="POST">
     {{ form.hidden_tag() }}
     <div class="coolinput">
-        <label for="population_size" class="text">Population</label>
-        <input type="number" placeholder="Type here..." name="population_size" class="input" value="{{ form.population_size.data }}">
-        
-        <label for="max_generations" class="text">Generations</label>
-        <input type="number" placeholder="Type here..." name="max_generations" class="input" value="{{ form.max_generations.data }}">
         <button id="generate-button" class="generate" type="submit">Generate</button>
     </div>
 </form>

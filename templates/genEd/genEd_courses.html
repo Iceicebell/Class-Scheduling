@@ -62,15 +62,15 @@
                 </div>
                 <div class="form-element">
                     <label for="course_name">Course Name</label>
-                    <input type="text" id="course_name" name="course_name" placeholder="Course Name" required>
+                    <input type="text" id="course_name" name="course_name" placeholder="Course Name" required readonly>
                 </div>
                 <div class="form-element">
-                    <label for="units">units</label>
-                    <input type="number" id="units" name="units" placeholder="Units" required>
+                    <label for="units">Units</label>
+                    <input type="number" id="units" name="units" placeholder="Units" required readonly>
                 </div>
                 <div class="form-element">
-                    <label for="hours_per_week">hours_per_week</label>
-                    <input type="number" id="hours_per_week" name="hours_per_week" placeholder="Number of hours per week" required>
+                    <label for="hours_per_week">Hours per Week</label>
+                    <input type="number" id="hours_per_week" name="hours_per_week" placeholder="Number of hours per week" required readonly>
                 </div>
                 <div class="form-element">
                     <label for="block">Block</label>
@@ -145,6 +145,42 @@
                 }
             });
         });
+
+            // Fetch course details when course code changes
+    document.getElementById('course_code').addEventListener('input', function() {
+        const courseCode = this.value;
+        if (courseCode) {
+            fetch(`/get-genedcourse-details?course_code=${courseCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('course_name').value = '';
+                        document.getElementById('units').value = '';
+                        document.getElementById('hours_per_week').value = '';
+                        document.getElementById('course_name').readOnly = false;
+                        document.getElementById('units').readOnly = false;
+                        document.getElementById('hours_per_week').readOnly = false;
+                    } else {
+                        document.getElementById('course_name').value = data.course_name;
+                        document.getElementById('units').value = data.units;
+                        document.getElementById('hours_per_week').value = data.hours_per_week;
+                        document.getElementById('course_name').readOnly = true;
+                        document.getElementById('units').readOnly = true;
+                        document.getElementById('hours_per_week').readOnly = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        } else {
+            document.getElementById('course_name').value = '';
+            document.getElementById('units').value = '';
+            document.getElementById('hours_per_week').value = '';
+            document.getElementById('course_name').readOnly = false;
+            document.getElementById('units').readOnly = false;
+            document.getElementById('hours_per_week').readOnly = false;
+        }
+    });
     });
     </script>
 {% endblock %}

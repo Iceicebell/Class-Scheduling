@@ -12,11 +12,6 @@
 <form id="generateForm" method="POST">
     {{ form.hidden_tag() }}
     <div class="coolinput">
-        <label for="population_size" class="text">Population</label>
-        <input type="number" placeholder="Type here..." name="population_size" class="input" value="{{ form.population_size.data }}">
-        
-        <label for="max_generations" class="text">Generations</label>
-        <input type="number" placeholder="Type here..." name="max_generations" class="input" value="{{ form.max_generations.data }}">
         <button id="generate-button" class="generate" type="submit">Generate</button>
     </div>
 </form>
@@ -52,35 +47,25 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for course_code_block, course_schedule in section_data['courses'].items() %}
                                     <tr>
-                                        <td>Unavailable</td>
+                                        <td>{{ course_code_block }}</td>
                                         {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
                                             <td>
-                                                {% if day in section_data['unavailable'] %}
-                                                    {% for slot in section_data['unavailable'][day] %}
-                                                    {{ slot['start_hour'] }}-{{ slot['end_hour'] }}
-                                                    {% if not loop.last %}<br><br>{% endif %}
-                                                    {% endfor %}
+                                                {% if day in course_schedule %}
+                                                {% for slot in course_schedule[day] %}
+                                                {{ slot['start_hour'] }}-{{ slot['end_hour'] }}
+                                                {% if not loop.last %}<br><br>{% endif %}
+                                                {% endfor %}
+                                                {% else %}
+                                                -
                                                 {% endif %}
                                             </td>
                                         {% endfor %}
                                     </tr>
-                                </tbody>
-                            <tbody>
-                                {% for course_code_block, course_schedule in section_data['courses'].items() %}
-                                <tr>
-                                    <td>{{ course_code_block }}</td>
-                                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
-                                        <td>
-                                            {% if day in course_schedule %}
-                                            {{ course_schedule[day]['start_hour'] }}-{{ course_schedule[day]['end_hour'] }}
-                                            {% endif %}
-                                        </td>
                                     {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
                 
                     </div>
                 </div>
@@ -106,15 +91,12 @@
                                 </thead>
                                 <tbody>
                                 </tbody>
-                            <tbody>
-                            </tbody>
-                        </table>
+                            </table>
                 
                     </div>
                 </div>
                 {% endif %}
             </div>
-
             <div class="content">
                 {% if faculty_timetable %}
                 {% for faculty_name, faculty_data in faculty_timetable.items() %}
@@ -150,7 +132,7 @@
                                     </tr>
                                     {% endfor %}
                                 </tbody>
-                        </table>
+                            </table>
                 
                     </div>
                 </div>
@@ -176,9 +158,7 @@
                                 </thead>
                                 <tbody>
                                 </tbody>
-                            <tbody>
-                            </tbody>
-                        </table>
+                            </table>
                 
                     </div>
                 </div>

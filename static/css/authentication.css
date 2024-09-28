@@ -274,8 +274,6 @@ body{
 }
 .alert {
     padding: 5px;
-    margin-top: 5px;
-    margin-bottom: 5px;
     border: 1px solid transparent;
     border-radius: 4px;
     position: relative;

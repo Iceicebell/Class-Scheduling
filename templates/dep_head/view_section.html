@@ -25,7 +25,7 @@
                                 <input type="text" id="block-search" placeholder="Search by Block" required>
                                 <button type="button" id="search-button" class="btn-search">Search</button>
                             </div>
-                            <button type="button" name="submit" id="submit" class="btn-add-to-section">Add Courses</button>
+                            <button type="button" name="submit" id="submit-add-courses" class="btn-add-to-section">Add Courses</button>
                         </div>
                         
                         <input type="hidden" id="section-id" name="section-id" value="{{ section.section_id }}">
@@ -37,7 +37,7 @@
                                         <th>Course Code</th>
                                         <th>Course Name</th>
                                         <th>Block</th>
-                                        <th>Credits</th>
+                                        <th>Type</th>
                                     </tr>
                                 </thead>
                                 <tbody id="course-tbody">
@@ -45,11 +45,11 @@
                                         <tr>
                                             <td>
                                                 {% if course[6] %}
-                                                <input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}">
-                                                    
+                                                <input class="get_value" type="checkbox" name="courses[]" value="{{ course[0] }}" data-course-code="{{ course[1] }}" data-block="{{ course[3] }}">
                                                 {% else %}
                                                     <a href="/edit-course/{{course[0]}}" class="missing">No Faculty Assigned</a>
                                                 {% endif %}
+                                            </td>
                                             <td>{{ course[1] }}</td>
                                             <td>{{ course[2] }}</td>
                                             <td>{{ course[3] }}</td>
@@ -86,98 +86,153 @@
                                         <td>
                                             <button class="btn-remove" data-course-id="{{ course[0] }}">Remove</button>
                                         </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-
-
-
-            <div class="content">
-                <div class="table"></div>
-                    <div class="table_header">
-                        <p>Unavailable Times</p>
-                        <button type="button" id="show-add" class="btn-add-to-section">Add</button>
+                <div class="content">
+                    <div class="table">
+                        <form id="add-unavailable-form">
+                            <div class="table_header">
+                                <p>Add Unavailable</p>
+                                <div class="form-element">
+                                    <input type="text" id="code-search" placeholder="Search General Education Courses" required>
+                                    <button type="button" id="search-unavailable" class="btn-search">Search</button>
+                                </div>
+                                <button type="button" name="submit" id="submit-add-unavailable" class="btn-add-to-section">Add Unavailable</button>
+                            </div>
+                            
+                            <input type="hidden" id="section-id" name="section-id" value="{{ section.section_id }}">
+                            <div class="table_section">
+                                <table id="unavailable-course-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Check</th>
+                                            <th>Course Code</th>
+                                            <th>Block</th>
+                                            <th>Time</th>
+                                            <th>Day</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="unavailable-course-tbody">
+                                        <!-- Rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div class="table_section">
-                        <table id="selected-table">
-                            <thead>
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Start Time</th>
-                                    <th>End Time</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ut in unavailable_times %}
+
+                    <div class="table">
+                        <div class="table_header">
+                            <p>Unavailable Times</p>
+                        </div>
+                        
+                        <div class="table_section">
+                            <table id="selected-unavailable-table">
+                                <thead>
                                     <tr>
-                                        <td>{{ ut[1] }}</td>  <!-- Day of Week -->
-                                        <td>{{ ut[2] }}</td>  <!-- Start Time (HH:MM) -->
-                                        <td>{{ ut[3] }}</td>  <!-- End Time (HH:MM) -->
-                                        <td>
-                                        <button class="edit-btn" data-section-id="{{ut[0]}}"><i class='bx bxs-edit-alt'></i></button>
-                                        <button class="delete-btn" data-section-id="{{ut[0]}}"><i class='bx bxs-trash-alt' ></i></button>
-                                    </td>
+                                        <th>Course Code</th>
+                                        <th>Block</th>
+                                        <th>Time</th>
+                                        <th>Day</th>
+                                        <th>Actions</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for ut in unavailable_times %}
+                                        <tr>
+                                            <td>{{ ut[1] }}</td>  
+                                            <td>{{ ut[2] }}</td>  
+                                            <td>{{ ut[3] }}/{{ ut[4] }}</td> 
+                                            <td>{{ ut[5] }}</td> 
+                                            <td>
+                                            <button class="edit-btn" data-section-id="{{ut[0]}}"><i class='bx bxs-edit-alt'></i></button>
+                                            <button class="delete-btn" data-section-id="{{ut[0]}}"><i class='bx bxs-trash-alt' ></i></button>
+                                        </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </span>
-
-<div id="loading-overlay" style="display: none;">
-    <div class="loading-spinner"></div>
-</div>
-
-
-
-
-<div class="popup">
-    <div class="close-btn">&times;</div>
-    <div class="form">
-        <form method="POST" action="{{ url_for('my_blueprint.addUnavaibleTimes') }}">
-            {{ form.hidden_tag() }}
-            <h2>Add Faculty</h2>
-            <input type="hidden" id="section-id" name="section_id" value="{{ section.section_id }}">
-            <div class="form-element">
-                <label for="day_of_week">Day</label>
-                <div class="select-box">
-                <select id="day_of_week" name="day_of_week">
-                    <option value="">-- Please select --</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                </select>
-            </div>
-            <div class="form-element">
-                <label for="start_time">Starting Time</label>
-                <input type="time" id="start_time" name="start_time"  required>
-            </div>
-            <div class="form-element">
-                <label for="end_time">End Time</label>
-                <input type="time" id="end_time" name="end_time" required>
-            </div>
-            </div>
-             <div class="form-element">
-            <button type="submit">Add Unavailable</button>
-            </div>
-        </form>
-    </div>
-</div>
 <script>
     $(document).ready(function() {
-        $('#submit').click(function(e) {
+        $('#search-unavailable').click(function() {
+            var searchValue = $('#code-search').val().trim().toLowerCase();
+            if (searchValue) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get-unavailable',
+                    data: { search_value: searchValue },
+                    success: function(courses) {
+                        var tbody = $('#unavailable-course-tbody');
+                        tbody.empty();
+                        courses.forEach(function(course) {
+                            var row = `
+                                <tr>
+                                    <td><input class="get_value unavailable-checkbox" type="checkbox" name="courses[]" value="${course[0]}" data-course-code="${course[1]}" data-block="${course[2]}"></td>
+                                    <td>${course[1]}</td>
+                                    <td>${course[2]}</td>
+                                    <td>${course[4]}/${course[5]}</td>
+                                    <td>${course[3]}</td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                        disableDuplicateCheckboxes();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching courses:', error);
+                    }
+                });
+            }
+        });
+
+        $('#submit-add-unavailable').click(function(e) {
+            e.preventDefault();
+            if (confirm("Are you sure you want to add these unavailable times?")) {
+                $('#loading-overlay').show();
+                var insert = [];
+                $('.get_value').each(function() {
+                    if ($(this).is(":checked")) {
+                        insert.push($(this).val());
+                    }
+                });
+                
+                var sectionId = $('#section-id').val();
+                var data = {
+                    section_id: sectionId,
+                    course_ids: insert
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/add-unavailable-times',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        alert('Unavailable times added successfully!');
+                        window.location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error adding unavailable times: ' + error);
+                    },
+                    complete: function() {
+                        $('#loading-overlay').hide();
+                    }
+                });
+            }
+        });
+
+        $('#submit-add-courses').click(function(e) {
             e.preventDefault();
             if (confirm("Are you sure you want to add these courses?")) {
                 $('#loading-overlay').show();
@@ -193,7 +248,7 @@
                     section_id: sectionId,
                     course_ids: insert
                 };
-    
+
                 $.ajax({
                     type: 'POST',
                     url: '/api/add-to-section',
@@ -201,7 +256,7 @@
                     contentType: 'application/json',
                     success: function(response) {
                         alert('Courses added successfully to section ' + sectionId);
-                        window.location.reload()
+                        window.location.reload();
                     },
                     error: function(xhr, status, error) {   
                         alert('Error adding courses: ' + error);
@@ -252,8 +307,8 @@
                 });
             }
         });
-    });
-    $('.edit-btn').click(function() {
+
+        $('.edit-btn').click(function() {
             var utId = $(this).data('section-id');
             var day = $(this).closest('tr').find('td:nth-child(1)').text();
             var startTime = $(this).closest('tr').find('td:nth-child(2)').text();
@@ -267,6 +322,7 @@
             // Show the popup
             $('.popup').show();
         });
+
         $('.delete-btn').click(function() {
             var utId = $(this).data('section-id');
             if (confirm("Are you sure you want to delete this unavailable time?")) {
@@ -284,5 +340,38 @@
             }
         });
 
+        // Disable duplicate checkboxes
+        function disableDuplicateCheckboxes() {
+            var seen = {};
+            $('.unavailable-checkbox').each(function() {
+                var courseCode = $(this).data('course-code');
+                var block = $(this).data('block');
+                var key = courseCode + '-' + block;
+
+                if (seen[key]) {
+                    $(this).prop('disabled', true);
+                } else {
+                    seen[key] = true;
+                }
+            });
+        }
+
+        // Automatically add corresponding courses
+        $(document).on('change', '.unavailable-checkbox', function() {
+            var courseCode = $(this).data('course-code');
+            var block = $(this).data('block');
+            var isChecked = $(this).is(':checked');
+
+            $('#course-tbody tr').each(function() {
+                var courseRow = $(this);
+                var courseCodeCell = courseRow.find('td:nth-child(2)').text().trim();
+                var blockCell = courseRow.find('td:nth-child(4)').text().trim();
+
+                if (courseCodeCell === courseCode && blockCell === block) {
+                    courseRow.find('input[type="checkbox"]').prop('checked', isChecked);
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}
