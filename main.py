@@ -102,22 +102,26 @@ def create_app():
                     department = dept_head_form.department.data
                     isVerified = dept_head_form.is_verified.data
 
-                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+                    # Check if the user selected valid options for role and department
+                    if role == '' or department == '':
+                        flash('Please select a valid role and department.', 'danger')
+                    else:
+                        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
 
-                    try:
-                        cursor = mysql.connection.cursor()
-                        insert_query = """
-                        INSERT INTO users (username, email, password, role, department, is_verified) VALUES (%s, %s, %s, %s, %s, %s)
-                        """
-                        cursor.execute(insert_query, (username, email, hashed_password.decode('utf-8'), role, department, isVerified))
-                        mysql.connection.commit()
-                        flash('Account created successfully!', 'success')
-                        return redirect(url_for('addAccount'))
-                    except Exception as e:
-                        print(f"Database operation failed: {e}")
-                        cursor.close()
+                        try:
+                            cursor = mysql.connection.cursor()
+                            insert_query = """
+                            INSERT INTO users (username, email, password, role, department, is_verified) VALUES (%s, %s, %s, %s, %s, %s)
+                            """
+                            cursor.execute(insert_query, (username, email, hashed_password.decode('utf-8'), role, department, isVerified))
+                            mysql.connection.commit()
+                            flash('Account created successfully!', 'success')
+                            return redirect(url_for('addAccount'))
+                        except Exception as e:
+                            print(f"Database operation failed: {e}")
+                            cursor.close()
                 else:
-                    flash('Form validation failed. Please check the input fields.', 'danger')
+                    pass
             return render_template('add_account.html', dept_head_form=dept_head_form)
         else:
             return redirect(url_for('my_blueprint.home'))

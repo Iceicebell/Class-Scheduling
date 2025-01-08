@@ -558,7 +558,7 @@ def view_section(section_id):
     selected_courses = cur.fetchall()
 
     cur.execute("""
-        SELECT ut.id, ut.day_of_week, ut.start_time, ut.end_time
+        SELECT ut.id, course_code,block, ut.start_time, ut.end_time, ut.day_of_week
         FROM unavailable_times ut
         WHERE ut.section_id = %s
     """, (section_id,))
@@ -566,9 +566,9 @@ def view_section(section_id):
 
     unavailable_times = []
     for ut in unavailable_times_raw:
-        start_time = decimal_to_time(ut[2])  # Convert start_time from decimal to HH:MM
-        end_time = decimal_to_time(ut[3])    # Convert end_time from decimal to HH:MM
-        unavailable_times.append((ut[0], ut[1], start_time, end_time))
+        start_time = decimal_to_time(ut[3])  # Convert start_time from decimal to HH:MM
+        end_time = decimal_to_time(ut[4])    # Convert end_time from decimal to HH:MM
+        unavailable_times.append((ut[0],ut[1], ut[2], start_time, end_time, ut[5]))
 
 
     cur.close()
@@ -643,65 +643,63 @@ class AddUnavailableForm(FlaskForm):
     end_time = TimeField('End Time', validators=[DataRequired()])
 
 
-@bp.route('/add-unavaibletimes', methods=['GET', 'POST'])
-def addUnavaibleTimes():
-    form = AddUnavailableForm(request.form)
+@bp.route('/get-unavailable', methods=['GET'])
+def get_unavailable_courses():
+    search_value = request.args.get('search_value')
     cur = g.mysql.connection.cursor()
-    logger.debug(f"Received request method: {request.method}")
-    
-    # Ensure user is logged in and has the correct role
-    if session.get('isVerified') == False or 'user_id' not in session or session.get('user_role') != 'dept-head':
-        flash('Unauthorized access.', 'danger')
-        return redirect(url_for('signin'))
-    
-    if form.validate_on_submit():
-        logger.debug("Form validated successfully")
-        
-        day_of_week = form.day_of_week.data
-        start_time = form.start_time.data
-        end_time = form.end_time.data
-        
-        # Convert start and end times to decimal
-        start_time_decimal = time_to_decimal(start_time)
-        end_time_decimal = time_to_decimal(end_time)
-        
-        section_id = request.form.get('section_id')  # This value should be passed from the form or session
+    query = """
+    SELECT rc.course_id, rc.course_code, rc.block, rc.day, rc.start_time, rc.end_time
+    FROM room_courses rc
+    JOIN final_allocations fa ON rc.course_id = fa.course_id
+    WHERE rc.course_code LIKE %s
+    """
+    cur.execute(query, ('%' + search_value + '%',))
+    courses = cur.fetchall()
+    cur.close()
 
-        try:
-            cur = g.mysql.connection.cursor()
-            logger.debug("Executing SQL query to add unavailable time...")
-            
-            cur.execute("""
-                INSERT INTO unavailable_times (start_time, end_time, section_id, day_of_week)
-                VALUES (%s, %s, %s, %s)
-            """, (start_time_decimal, end_time_decimal, section_id, day_of_week))
-            
-            logger.debug(f"Affected rows: {cur.rowcount}")
-            
-            if cur.rowcount == 0:
-                logger.warning("No rows were affected by the insert operation")
-            
-            g.mysql.connection.commit()
-            cur.close()
-            flash('Unavailable time added successfully!', 'success')
-        except Exception as e:
-            logger.error(f"Error adding unavailable time: {str(e)}")
-            flash('Failed to add unavailable time.', 'danger')
+    # Convert start_time and end_time from decimal to HH:MM format
+    converted_courses = []
+    for course in courses:
+        course_id, course_code, block, day, start_time, end_time = course
+        start_time_str = decimal_to_time(start_time)
+        end_time_str = decimal_to_time(end_time)
+        converted_courses.append((course_id, course_code, block, day, start_time_str, end_time_str))
+
+    return jsonify(converted_courses)
+
+
+@bp.route('/add-unavailable-times', methods=['POST'])
+def add_unavailable_times():
+    data = request.get_json()
+    section_id = data['section_id']
+    course_ids = data['course_ids']
+    cur = g.mysql.connection.cursor()
+    
+    for course_id in course_ids:
+        # Fetch the course_code and block for the given course_id
+        cur.execute("""
+        SELECT rc.course_code, rc.block
+        FROM room_courses rc
+        WHERE rc.course_id = %s
+        """, (course_id,))
+        course_code, block = cur.fetchone()
         
-        return redirect(url_for('my_blueprint.view_section',section_id=section_id))  # Redirect to the appropriate page
+        # Insert all courses with the same course_code and block
+        cur.execute("""
+        INSERT INTO unavailable_times (section_id, course_code, block, day_of_week, start_time, end_time)
+        SELECT %s, rc.course_code, rc.block, rc.day, rc.start_time, rc.end_time
+        FROM room_courses rc
+        JOIN final_allocations fa ON rc.course_id = fa.course_id
+        WHERE rc.course_code = %s AND rc.block = %s
+        """, (section_id, course_code, block))
     
-    else:
-        logger.debug(f"Form validation failed. Errors: {form.errors}")
-        flash('Form validation failed.', 'warning')
-    
-    return redirect(url_for('my_blueprint.view_section',section_id=section_id, form=form, current_endpoint=request.endpoint))
+    g.mysql.connection.commit()
+    cur.close()
+    return jsonify({'success': True})
 
 def time_to_decimal(time_value):
     """Convert time to decimal representation."""
     return time_value.hour + time_value.minute / 60
-
-    
-
 
 
 
@@ -717,7 +715,22 @@ def time_to_decimal(time_value):
 
 
 # ========================================================Course1======================================================
-
+@bp.route('/get-course-details', methods=['GET'])
+def get_course_details():
+    course_code = request.args.get('course_code')
+    cur = g.mysql.connection.cursor()
+    cur.execute("SELECT course_name, units, hours_per_week FROM courses WHERE course_code = %s", (course_code,))
+    course = cur.fetchone()
+    cur.close()
+    if course:
+        return jsonify({
+            'course_name': course[0],
+            'units': course[1],
+            'hours_per_week': course[2]
+        })
+    else:
+        return jsonify({'error': 'Course not found'}), 404
+    
 class AddCourseForm(FlaskForm):
     course_name = StringField('Course Name', validators=[DataRequired()])
     course_code = StringField('Course Code', validators=[DataRequired()])
@@ -755,9 +768,15 @@ def add_course_to_db(course_name, course_code, units, hours_per_week, course_blo
 
     cur = g.mysql.connection.cursor()
     try:
+        # Check if the course already exists
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_code = %s AND course_block = %s AND program_id = %s",
+                    (course_code, course_block, program_id))
+        if cur.fetchone()[0] > 0:
+            return {'success': False, 'message': 'Course already exists'}
+
         # Adjust the INSERT statement according to your courses table structure
         cur.execute("INSERT INTO courses (course_name, course_code, units, hours_per_week, course_block, course_type, course_level, program_id, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                  (course_name, course_code, units, hours_per_week, course_block, db_course_type, db_year_level, program_id, faculty_id))
+                    (course_name, course_code, units, hours_per_week, course_block, db_course_type, db_year_level, program_id, faculty_id))
         g.mysql.connection.commit()
 
         if faculty_id:
@@ -768,9 +787,11 @@ def add_course_to_db(course_name, course_code, units, hours_per_week, course_blo
             """, (units, faculty_id))
             g.mysql.connection.commit()
 
+        return {'success': True, 'message': 'Course added successfully'}
+
     except Exception as e:
         logger.error(f"An error occurred: {e}")
-        # Handle exception, maybe rollback transaction here
+        return {'success': False, 'message': 'An error occurred while adding the course'}
     finally:
         cur.close()
 
@@ -1365,6 +1386,7 @@ class EditUserForm(FlaskForm):
         ('registrar', 'Registrar'),
         ('dept-head', 'Department Head')], validators=[DataRequired()])
     department = SelectField("Department", choices=[
+        ('ADMIN', 'ADMIN'),
         ('REGISTRAR', 'REGISTRAR'),
         ('GENED', 'GENED'),
         ('CSIT', 'CSIT'),
@@ -1662,6 +1684,21 @@ def add_gened_course():
     # Render the template with the form
     return render_template('genEd/add_gened_course.html', form=form)
 
+@bp.route('/get-genedcourse-details', methods=['GET'])
+def get_genedcourse_details():
+    course_code = request.args.get('course_code')
+    cur = g.mysql.connection.cursor()
+    cur.execute("SELECT course_name, units, hours_per_week FROM gened_courses WHERE course_code = %s", (course_code,))
+    course = cur.fetchone()
+    cur.close()
+    if course:
+        return jsonify({
+            'course_name': course[0],
+            'units': course[1],
+            'hours_per_week': course[2]
+        })
+    else:
+        return jsonify({'error': 'Course not found'}), 404
 
 def update_gen_ed_course_to_db(course_id, course_name, course_code, units, hours_per_week, course_block, course_type, faculty_id=None, capacity=None):
     try:
@@ -1810,6 +1847,26 @@ def delete_gened_course(course_id):
         cur.close()
 
 
+@bp.route('/delete-gened_solutions', methods=['DELETE'])
+def delete_gened_solutions():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'gen-ed':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM gened_solutions"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from the generated schedules deleted')
+
+
+
+
 @bp.route('/gened-create', methods=['GET', 'POST'])
 def gened_create():
     if session.get('isVerified') == False:
@@ -1899,6 +1956,22 @@ def gened_create():
                            current_endpoint=request.endpoint)
 
 
+@bp.route('/delete-user_solutions', methods=['DELETE'])
+def delete_user_solutions():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'dept-head':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM user_solutions"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from the generated schedules deleted')
 
 
 class EditGenEdScheduleForm(FlaskForm):
@@ -2359,6 +2432,45 @@ def registrar_courses():
                            departments=departments, 
                            department_filter=department_filter)
 
+
+
+@bp.route('/delete-courses/<string:department>', methods=['DELETE'])
+def delete_courses(department):
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'registrar':
+        abort(403)
+
+    if not department:
+        return jsonify(success=False, message='No department selected for deletion.')
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM room_courses WHERE department = %s"
+    cur.execute(delete_query, (department,))
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message=f'All courses from the {department} department have been deleted.')
+
+@bp.route('/delete-allocations', methods=['DELETE'])
+def delete_allocations():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'registrar':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM allocations"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from allocations table deleted')
+
 def convert_decimal_to_time(decimal_time):
     try:
         hours = int(decimal_time)
@@ -2760,13 +2872,15 @@ def edit_schedule(course_code, course_block):
 
     return redirect(url_for('my_blueprint.create'))
 
-
 @bp.route('/export-csv', methods=['GET'])
 def export_csv():
     cur = g.mysql.connection.cursor()
+    department = session.get('department')
     try:
-        # Get the current user's ID from the session
+        # Get the current user's ID and department from the session
         current_user_id = session.get('user_id')
+        
+
         logger.debug(f"Current user ID: {current_user_id}")
 
         # Query to fetch the required data
@@ -2801,7 +2915,7 @@ def export_csv():
             start_time = float(start_hour)
             end_time = start_time + float(duration)
             start_time_str = f"{int(start_time):02d}:{int((start_time % 1) * 60):02d}"
-            end_time_str = f"{int(end_time):02d}:{int((end_time % 1) * 60):02d}"
+            end_time_str = f"{int(end_time):02d}:{int(((end_time) % 1) * 60):02d}"
 
             # Create a unique key for each course
             course_key = (course_code, course_block, start_time_str, day)
@@ -2811,7 +2925,8 @@ def export_csv():
                 writer.writerow([course_code, capacity, course_type, course_block, department, start_time_str, end_time_str, day])
 
         output.seek(0)
-        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=schedule.csv"})
+        filename = f"{department}_schedule.csv"
+        return Response(output, mimetype='text/csv', headers={"Content-Disposition": f"attachment;filename={filename}"})
     except Exception as e:
         logger.error(f"An error occurred while exporting CSV: {e}")
         flash('Failed to export CSV.', 'danger')
@@ -2867,7 +2982,7 @@ def gened_export_csv():
                 writer.writerow([course_code, capacity, course_type, course_block, department, start_time_str, end_time_str, day])
 
         output.seek(0)
-        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=schedule.csv"})
+        return Response(output, mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=genEd_schedule.csv"})
     except Exception as e:
         logger.error(f"An error occurred while exporting CSV: {e}")
         flash('Failed to export CSV.', 'danger')

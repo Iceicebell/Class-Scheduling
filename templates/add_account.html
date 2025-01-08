@@ -70,7 +70,9 @@
 
            <div class="select-box">
             <select id="role" name="role">
+                <option value="">Select Role</option>
                 {% for value, label in dept_head_form.role.choices %}
+                    
                     <option value="{{ value }}">{{ label }}</option>
                 {% endfor %}
             </select>
@@ -86,7 +88,9 @@
 
                <div class="select-box">
                    <select id="department" name="department">
+                    <option value="">Select Department</option>
                        {% for value, label in dept_head_form.department.choices %}
+                            
                            <option value="{{ value }}">{{ label }}</option>
                        {% endfor %}
                    </select>

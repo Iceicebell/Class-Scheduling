@@ -9,15 +9,15 @@
         <p>Courses</p>
         <div>
             <form method="GET" action="{{ url_for('my_blueprint.registrar_courses') }}">
-                <select class="department-filter" name="department" onchange="this.form.submit()">
+                <select id="department-filter" class="department-filter" name="department" onchange="this.form.submit()">
                     <option value="">All Departments</option>
                     {% for department in departments %}
                     <option value="{{ department[0] }}" {% if department[0] == department_filter %}selected{% endif %}>{{ department[0] }}</option>
                     {% endfor %}
                 </select>
+                <button id="delete-button" class="delete-button" {% if not department_filter %}disabled{% endif %}>Delete</button>
             </form>
-        
-
+            
         </div>
         <button id="import" class="add_new" onclick="document.getElementById('file-input').click();">Import</button>
         <form id="import-form" action="{{ url_for('my_blueprint.import_csv') }}" method="POST" enctype="multipart/form-data" style="display: none;">
@@ -47,10 +47,6 @@
                     <td>{{ course[4] }}</td>
                     <td>{{ course[5] }}</td>
                 </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7">No courses found.</td>
-                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -68,12 +64,35 @@
 </nav>
 
 <script>
-document.getElementById('filter-button').addEventListener('click', function() {
-    const departmentValue = document.getElementById('department-filter').value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('department', departmentValue);
-    url.searchParams.set('page', 1); // Reset to the first page on new filter
-    window.location.href = url.toString();
-});
-</script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('delete-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Delete button clicked');  // Debugging statement
+            const department = document.querySelector('.department-filter').value;
+            if (!department) {
+                alert('Please select a department to delete.');
+                return;
+            }
+        
+            if (confirm(`Are you sure you want to delete all courses from the ${department} department?`)) {
+                // Send a DELETE request to your Flask route
+                fetch(`/delete-courses/${department}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Courses deleted successfully!');
+                            location.reload();  // Reload the page to reflect changes
+                        } else {
+                            alert('Failed to delete courses.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting courses.');
+                    });
+            }
+        });
+    });
+    </script>
+
 {% endblock %}
