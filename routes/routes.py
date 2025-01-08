@@ -768,9 +768,15 @@ def add_course_to_db(course_name, course_code, units, hours_per_week, course_blo
 
     cur = g.mysql.connection.cursor()
     try:
+        # Check if the course already exists
+        cur.execute("SELECT COUNT(*) FROM courses WHERE course_code = %s AND course_block = %s AND program_id = %s",
+                    (course_code, course_block, program_id))
+        if cur.fetchone()[0] > 0:
+            return {'success': False, 'message': 'Course already exists'}
+
         # Adjust the INSERT statement according to your courses table structure
         cur.execute("INSERT INTO courses (course_name, course_code, units, hours_per_week, course_block, course_type, course_level, program_id, faculty_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                  (course_name, course_code, units, hours_per_week, course_block, db_course_type, db_year_level, program_id, faculty_id))
+                    (course_name, course_code, units, hours_per_week, course_block, db_course_type, db_year_level, program_id, faculty_id))
         g.mysql.connection.commit()
 
         if faculty_id:
@@ -781,9 +787,11 @@ def add_course_to_db(course_name, course_code, units, hours_per_week, course_blo
             """, (units, faculty_id))
             g.mysql.connection.commit()
 
+        return {'success': True, 'message': 'Course added successfully'}
+
     except Exception as e:
         logger.error(f"An error occurred: {e}")
-        # Handle exception, maybe rollback transaction here
+        return {'success': False, 'message': 'An error occurred while adding the course'}
     finally:
         cur.close()
 
@@ -1839,6 +1847,26 @@ def delete_gened_course(course_id):
         cur.close()
 
 
+@bp.route('/delete-gened_solutions', methods=['DELETE'])
+def delete_gened_solutions():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'gen-ed':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM gened_solutions"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from the generated schedules deleted')
+
+
+
+
 @bp.route('/gened-create', methods=['GET', 'POST'])
 def gened_create():
     if session.get('isVerified') == False:
@@ -1928,6 +1956,22 @@ def gened_create():
                            current_endpoint=request.endpoint)
 
 
+@bp.route('/delete-user_solutions', methods=['DELETE'])
+def delete_user_solutions():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'dept-head':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM user_solutions"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from the generated schedules deleted')
 
 
 class EditGenEdScheduleForm(FlaskForm):
@@ -2387,6 +2431,45 @@ def registrar_courses():
                            courses=courses, page=page, total_pages=total_pages, 
                            departments=departments, 
                            department_filter=department_filter)
+
+
+
+@bp.route('/delete-courses/<string:department>', methods=['DELETE'])
+def delete_courses(department):
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'registrar':
+        abort(403)
+
+    if not department:
+        return jsonify(success=False, message='No department selected for deletion.')
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM room_courses WHERE department = %s"
+    cur.execute(delete_query, (department,))
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message=f'All courses from the {department} department have been deleted.')
+
+@bp.route('/delete-allocations', methods=['DELETE'])
+def delete_allocations():
+    if session.get('isVerified') == False:
+        abort(403)
+    if 'user_id' not in session:
+        return redirect(url_for('signin'))
+    if session.get('user_role') != 'registrar':
+        abort(403)
+
+    cur = g.mysql.connection.cursor()
+    delete_query = "DELETE FROM allocations"
+    cur.execute(delete_query)
+    g.mysql.connection.commit()
+    cur.close()
+
+    return jsonify(success=True, message='All data from allocations table deleted')
 
 def convert_decimal_to_time(decimal_time):
     try:

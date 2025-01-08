@@ -4,17 +4,15 @@
 {% extends "registrar/registrar.html" %}
 
 {% block content %}
-<div class="loader" id="loader" style="display: none;"></div>
+<div class="loader" id="loader" style="display: none;">
+    <div class="text">Please wait while the schedule is being generated...</div>
+</div>
 <div class="table_header1">
     <form id="generateForm" method="POST">
         {{ form.hidden_tag() }}
-        <label for="population_size" class="text">Population</label>
-        <input type="number" placeholder="Type here..." name="population_size" class="input" value="{{ form.population_size.data }}">
-        
-        <label for="max_generations" class="text">Generations</label>
-        <input type="number" placeholder="Type here..." name="max_generations" class="input" value="{{ form.max_generations.data }}">
         <button id="generate-button" class="generate" type="submit">Generate</button>
     </form>
+    
     <div class="filter-container">
         <form method="GET" action="{{ url_for('RoomAlgorithm.room_schedule') }}">
             <label for="floor_level">Select Floor Level:</label>
@@ -26,6 +24,7 @@
             </select>
         </form>
     </div>
+    <button id="delete-button" class="delete-button">Delete</button>
 </div>
 
 {% for classroom in classrooms %}
@@ -65,4 +64,27 @@
 </div>
 {% endfor %}
 <script src="{{ url_for('static', filename='js/scripts/loading.js') }}"></script>
+<script>
+    document.getElementById('delete-button').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (confirm('Are you sure you want to delete all data from the allocations table?')) {
+            // Send a DELETE request to your Flask route
+            fetch('/delete-allocations', { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Optionally, you can refresh the page or remove the table rows
+                        alert('All data deleted successfully!');
+                        location.reload(); // Refresh the page
+                    } else {
+                        alert('Failed to delete data.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the data.');
+                });
+        }
+    });
+</script>
 {% endblock %}

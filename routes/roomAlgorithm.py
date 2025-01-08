@@ -269,8 +269,6 @@ def save_schedule_to_db(schedule):
         conn.close()
 
 class GenerateForm(FlaskForm):
-    population_size = IntegerField('Population Size', default=100)
-    max_generations = IntegerField('Max Generations', default=500)
     submit = SubmitField('Generate Schedule')
 
 @bp.route('/generate-schedule', methods=['GET', 'POST'])
@@ -279,8 +277,8 @@ def room_schedule():
     floor_level = request.args.get('floor_level', 1, type=int)
     
     if form.validate_on_submit():
-        population_size = form.population_size.data
-        generations = form.max_generations.data
+        population_size = 500
+        generations = 1000
         
         # Start profiling
         profiler = cProfile.Profile()

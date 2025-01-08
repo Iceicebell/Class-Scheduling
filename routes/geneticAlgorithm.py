@@ -19,8 +19,6 @@ from flask_wtf.csrf import CSRFProtect
 from datetime import timedelta, time
 
 
-
-
 db_config = {
     'host': 'localhost',
     'user': 'root',
@@ -33,12 +31,13 @@ bp = Blueprint('algorithm', __name__)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-POPULATION_SIZE = 200
-MAX_GENERATIONS = 100
+POPULATION_SIZE = 500
+MAX_GENERATIONS = 200
 MUTATION_RATE = 0.01
     
 class Solution:
     faculty_cache = {}
+    
     def __init__(self, schedule=None, shared_schedule=None):
         self.schedule = schedule if schedule else {}
         self.shared_schedule = shared_schedule if shared_schedule else {}
@@ -72,12 +71,14 @@ class Solution:
             days = [day] 
             split_duration_decimal = duration_decimal
         
+        faculty_id = self.get_faculty_id(cursor, course_id)
+        
         for d in days:
             max_duration = min(12 - start_hour, split_duration_decimal) if start_hour < 12 else split_duration_decimal
             if start_hour >= 12:
                 max_duration = min(20 - start_hour, split_duration_decimal)
 
-            if self.is_slot_available(section_id, d, start_hour, max_duration):
+            if self.is_slot_available(section_id, d, start_hour, max_duration) and not self.is_faculty_conflict(faculty_id, d, start_hour, max_duration):
                 self.schedule[section_id].append((course_id, d, start_hour, max_duration, course_code, course_block))
             else:
                 # print(f"Slot not available for course {course_id} on {d} at {start_hour}")
@@ -85,6 +86,18 @@ class Solution:
 
         self.fitness_score = None
 
+    def is_faculty_conflict(self, faculty_id, day, start_hour, duration):
+        end_hour = start_hour + duration
+        for section_id, assignments in self.schedule.items():
+            for course_id, course_day, course_start, course_duration, _, _ in assignments:
+                course_end = course_start + course_duration
+                if day == course_day and (
+                    (start_hour < course_end and end_hour > course_start) or
+                    (course_start < end_hour and course_end > start_hour)
+                ):
+                    if self.get_faculty_id(None, course_id) == faculty_id:
+                        return True
+        return False
 
     def fetch_unavailable_times(self, cursor, section_id):
         """Fetches unavailable times for a section and adds them to the schedule as if they were courses."""
@@ -92,18 +105,13 @@ class Solution:
         cursor.execute(query, (section_id,))
         unavailable_periods = cursor.fetchall()
         for day, start_time, end_time, course_code, block in unavailable_periods:
-
             day = self.convert_day_format(day)
-
             pseudo_course_id = -1
-
             duration = end_time - start_time
-
             self.add_course_assignment(section_id, pseudo_course_id, day, start_time, duration, course_code, block, cursor)
 
     def convert_day_format(self, day_of_week):
         """Converts the day format from the database to the format used in your schedule."""
-
         return day_of_week
 
     def get_pair_day(self, day):
@@ -115,7 +123,7 @@ class Solution:
         }
         paired_day = day_pairs.get(day, day)
         # print(f"Pair day for {day} is {paired_day}")
-        return day_pairs.get(day, day)
+        return paired_day
 
     def get_available_slots(self, section_id, duration):
         available_slots = []
@@ -128,10 +136,8 @@ class Solution:
 
     def is_slot_available(self, section_id, day, start_hour, duration):
         end_hour = start_hour + duration
-
         if start_hour < 13 and end_hour > 12:
             return False
-
         for course_id, course_day, course_start, course_duration, _, _ in self.schedule.get(section_id, []):
             course_end = course_start + course_duration
             if day == course_day and (
@@ -142,15 +148,12 @@ class Solution:
         return True
     
     def get_schedule_by_course_code_and_block(self, course_code, course_block):
-
         return self.shared_schedule.get((course_code, course_block), (None, None))
 
     def add_shared_schedule(self, course_code, course_block, assignments):
         key = (course_code, course_block)
         if key not in self.shared_schedule:
             self.shared_schedule[key] = []
-
-
         self.shared_schedule[key].extend([assignment for assignment in assignments if assignment not in self.shared_schedule[key]])
 
     def remove_course_assignment(self, section_id, course_id):
@@ -164,12 +167,9 @@ class Solution:
     def get_schedule(self, section_id):
         return self.schedule.get(section_id, [])
 
-
-
     def get_faculty_id(self, cursor, course_id):
         if course_id in self.faculty_cache:
             return self.faculty_cache[course_id]
-        
         query = "SELECT faculty_id FROM courses WHERE course_id = %s"
         cursor.execute(query, (course_id,))
         result = cursor.fetchone()
@@ -185,8 +185,6 @@ class Solution:
                 scheduled_hours = sum(dur for _, _, _, dur, _, _ in section_assignments if dur == duration)
                 unit_match_score -= abs(expected_hours - scheduled_hours)
         return unit_match_score
-
-
 
     def get_course_hours_per_week(self, cursor, course_id):
         query = "SELECT hours_per_week FROM courses WHERE course_id = %s"
@@ -209,7 +207,6 @@ class Solution:
         efficiency_reward = 0
         utilization_penalty = 0
 
-
         for section_id, assignments in self.schedule.items():
             for i, (course_id1, day1, start_hour1, duration1, course_code1, course_block1) in enumerate(assignments):
                 for j in range(i + 1, len(assignments)):
@@ -219,20 +216,21 @@ class Solution:
                         end_time2 = start_hour2 + duration2
                         if start_hour1 < start_hour2 < end_time1 or start_hour1 < end_time2 < end_time1: 
                             conflicts_penalty += 4000 
-                        
+                            # print(f"Time conflict detected between courses {course_id1} and {course_id2} on {day1}")
+
                         faculty_id1 = self.get_faculty_id(cursor, course_id1)
                         faculty_id2 = self.get_faculty_id(cursor, course_id2)
                         
+                        # print(f"Comparing faculty {faculty_id1} for course {course_id1} and faculty {faculty_id2} for course {course_id2}")
 
                         if faculty_id1 == faculty_id2 and (course_code1 != course_code2 or course_block1 != course_block2):
-                            conflicts_penalty += 3000 
-
+                            # print(f"Faculty conflict detected between courses {course_id1} and {course_id2} handled by faculty {faculty_id1}")
+                            conflicts_penalty += 10000
 
         for section_id, assignments in self.schedule.items():
             for course_id, day, start_hour, duration, course_code, course_block in assignments:
                 if 12 <= start_hour < 13 and start_hour + duration > 13: 
                     conflicts_penalty += 100
-
 
         course_code_block_groups = {}
         for section_id, assignments in self.schedule.items():
@@ -244,27 +242,20 @@ class Solution:
                 if len(course_code_block_groups[key]) > 1: 
                     integrity_reward += 1000 
 
-
         for section_id, assignments in self.schedule.items():
             morning_slots_filled = sum(5 for _, day, start_hour, _, _, _ in assignments if start_hour < 12)
             afternoon_slots_filled = sum(5 for _, day, start_hour, _, _, _ in assignments if start_hour >= 13)
             efficiency_reward += min(morning_slots_filled, afternoon_slots_filled) 
 
-
         self.fitness_score = integrity_reward + efficiency_reward - conflicts_penalty - utilization_penalty
         # print("Fitness Score: ",self.fitness_score)
         return self.fitness_score
 
-
-    
     def __lt__(self, other):
-            """Less than comparison method."""
-            if not isinstance(other, type(self)):
-
-                return NotImplemented
-
-            return self.fitness_score < other.fitness_score if other.fitness_score is not None else False
-
+        """Less than comparison method."""
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.fitness_score < other.fitness_score if other.fitness_score is not None else False
 
     def __eq__(self, other):
         """Equality comparison method."""
@@ -275,7 +266,6 @@ class Solution:
     def find_available_slot(self, section_id, duration):
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
         start_hours = list(range(7, 20))  # 7 AM to 7 PM
-        
 
         random.shuffle(days)
         random.shuffle(start_hours)
@@ -283,15 +273,12 @@ class Solution:
         for day in days:
             for start_hour in start_hours:
                 end_hour = start_hour + duration
-                
 
                 if start_hour < 12 and end_hour > 13:
                     continue
-                
 
                 if end_hour > 20:
                     continue
-                
 
                 conflict = False
                 for course_id, existing_day, existing_start, existing_duration, _, _ in self.schedule.get(section_id, []):
@@ -305,34 +292,26 @@ class Solution:
                 
                 if not conflict:
                     return (day, start_hour)
-        
 
         return None
 
-
     def display(self):
-
         for section_id, assignments in self.schedule.items():
             print(f"\nSchedule for Section {section_id}:")
             for course_id, day, start_hour, duration, course_code, course_block in assignments: 
                 print(f"Course ID: {course_id}, Day: {day}, Start Hour: {start_hour}, Duration: {duration}, Course Code: {course_code}, Block: {course_block}")
 
-            
-
             schedule_by_day = {'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [], 'Saturday': []}
             for course_id, day, start_hour, duration, _, _ in assignments:  
                 schedule_by_day[day].append((course_id, f"{start_hour}-{start_hour + duration}"))
-            
 
             max_courses_per_day = max(len(courses) for courses in schedule_by_day.values())
-            
 
             print("-" * 80)
             print("Course ID", end='\t')
             for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday','Saturday']:
                 print(f"{day:<15}", end='\t')
             print("\n" + "-" * 80)
-            
 
             for i in range(max_courses_per_day):
                 row = [""] * 6 
@@ -343,7 +322,7 @@ class Solution:
                     else:
                         row[j] = " " * 1 
                 print("".join(row))
-            print("-" * 80)  
+            print("-" * 80)
 
 def get_course_details(cursor, course_id):
     query = "SELECT course_code, course_block FROM courses WHERE course_id = %s"
@@ -448,7 +427,7 @@ def generate_initial_solution():
             WHERE s.user_id = %s;
         """, (session.get('user_id'),))
         
-        print("Fetching results...")
+        # print("Fetching results...")
         sections_data = cursor.fetchall()
         
         # print(f"sections_data length: {len(sections_data)}")
@@ -677,9 +656,6 @@ def generate():
             stats = pstats.Stats(profiler).sort_stats('cumtime')
             stats.print_stats(10)  
 
-            
-
-            best_solution = get_best_solution()
 
 
             cursor.execute("DELETE FROM user_solutions WHERE user_id = %s", (session['user_id'],))
